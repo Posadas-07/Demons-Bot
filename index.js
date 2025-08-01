@@ -143,6 +143,35 @@ sock.ev.on("messages.upsert", async ({ messages }) => {
   console.log(chalk.cyan(`💬 Tipo: ${Object.keys(m.message)[0]}`));
   console.log(chalk.cyan(`💬 Texto: ${chalk.bold(messageContent || "📂 (Multimedia)")}`));
 
+//fin de la logica modo admins         
+// ——— Presentación automática (solo una vez por grupo) ———
+  if (isGroup) {
+    const welcomePath = path.resolve("setwelcome.json");
+    // Asegurarnos de que existe y cargar
+    if (!fs.existsSync(welcomePath)) fs.writeFileSync(welcomePath, "{}");
+    const welcomeData = JSON.parse(fs.readFileSync(welcomePath, "utf-8"));
+
+    welcomeData[chatId] = welcomeData[chatId] || {};
+    if (!welcomeData[chatId].presentationSent) {
+      // Enviar vídeo de presentación
+      await sock.sendMessage(chatId, {
+        video: { url: "https://cdn.russellxz.click/bc06f25b.mp4" },
+        caption: `
+🎉 ¡Hola a todos! 🎉
+
+👋 Soy *La Suki Bot*, un bot programado 🤖.  
+📸 A veces reacciono o envío multimedia porque así me diseñaron.  
+
+⚠️ *Lo que diga no debe ser tomado en serio.* 😉  
+        `.trim()
+      });
+      // Marcar como enviado y guardar
+      welcomeData[chatId].presentationSent = true;
+      fs.writeFileSync(welcomePath, JSON.stringify(welcomeData, null, 2));
+    }
+  }
+  //fin de la logica
+  
 // === INICIO LÓGICA CHATGPT POR GRUPO CON activos.db ===
 try {
   const { getConfig } = requireFromRoot("db");
@@ -942,7 +971,8 @@ if (isGroup) {
     return;
   }
 }
-//fin de la logica modo admins         
+
+  
   // 🧩 Detectar prefijo
   const prefixUsed = global.prefixes.find(p => messageContent.startsWith(p));
   if (!prefixUsed) return;
