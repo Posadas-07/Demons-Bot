@@ -41,6 +41,8 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}setcanvas / canvas
 │๛ ${pref}setreglas / reglas
 │๛ ${pref}sorteo
+│๛ ${pref}setsoporte / soporte
+│๛ ${pref}setpromo / promo
 ╰─────◆
 
 𖠁𝙄𝘼 - 𝘾𝙃𝘼𝙏 𝘽𝙊𝙏𖠁
