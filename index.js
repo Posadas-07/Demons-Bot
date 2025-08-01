@@ -162,7 +162,10 @@ sock.ev.on("messages.upsert", async ({ messages }) => {
 👋 Soy *La Suki Bot*, un bot programado 🤖.  
 📸 A veces reacciono o envío multimedia porque así me diseñaron.  
 
-⚠️ *Lo que diga no debe ser tomado en serio.* 😉  
+⚠️ *Lo que diga no debe ser tomado en serio.* 😉
+
+📌 Usa el comando *.menu* o *.menugrupo* para ver cómo usarme y programar cosas.  
+Soy un bot *sencillo y fácil de usar*, ¡gracias por tenerme en el grupo! 💖  
         `.trim()
       });
       // Marcar como enviado y guardar
