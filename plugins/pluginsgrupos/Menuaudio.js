@@ -27,6 +27,12 @@ Solo escribe el *nombre del paquete* en el chat y *La Suki Bot* enviará al azar
 📥 Para *guardar multimedia* responde a cualquier imagen, audio, sticker o video con:
 ➤ *.guar nombreDelPaquete*
 
+🗑️ Para *borrar un archivo específico* de un paquete:
+➤ *.del nombreDelPaquete número*
+
+🔍 Para *ver un archivo específico* de un paquete:
+➤ *.g nombreDelPaquete número*
+
 📦 Todos los paquetes son públicos y compartidos entre los usuarios del grupo.
 
 ━━━━━━━━━━━━━━━
