@@ -618,56 +618,7 @@ try {
   console.error("❌ Error en lógica LINKALL:", e);
 }
 // === FIN DE LINKALL ===
-// === LÓGICA DE RESPUESTA AUTOMÁTICA CON PALABRA CLAVE (adaptada) ===
-try {
-  const guarPath = path.resolve('./guar.json');
-  if (fs.existsSync(guarPath)) {
-    const guarData = JSON.parse(fs.readFileSync(guarPath, 'utf-8'));
-    const cleanText = messageContent
-      .toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\w]/g, '');
 
-    for (const key of Object.keys(guarData)) {
-      const cleanKey = key
-        .toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^\w]/g, '');
-
-      if (cleanText === cleanKey && guarData[key]?.length) {
-        const item = guarData[key][Math.floor(Math.random() * guarData[key].length)];
-        const buffer = Buffer.from(item.media, "base64");
-        const extension = item.ext || item.mime?.split("/")[1] || "bin";
-        const mime = item.mime || "";
-
-        const options = { quoted: m };
-        let payload = {};
-
-        if (["jpg", "jpeg", "png"].includes(extension)) {
-          payload.image = buffer;
-        } else if (["mp4", "mkv", "webm"].includes(extension)) {
-          payload.video = buffer;
-        } else if (["mp3", "ogg", "opus"].includes(extension)) {
-          payload.audio = buffer;
-          payload.mimetype = mime || "audio/mpeg";
-          payload.ptt = false;
-        } else if (["webp"].includes(extension)) {
-          payload.sticker = buffer;
-        } else {
-          payload.document = buffer;
-          payload.mimetype = mime || "application/octet-stream";
-          payload.fileName = `archivo.${extension}`;
-        }
-
-        await sock.sendMessage(chatId, payload, options);
-        return;
-      }
-    }
-  }
-} catch (e) {
-  console.error("❌ Error en lógica de palabra clave:", e);
-}
-// === FIN DE LÓGICA ===
 // === INICIO BLOQUEO DE MENSAJES DE USUARIOS MUTEADOS ===
 try {
   const fs = require("fs");
@@ -863,6 +814,58 @@ try {
   console.error("❌ Error en lógica de modo privado:", e);
 }
 // === 🔐 FIN MODO PRIVADO GLOBAL ===
+
+// === LÓGICA DE RESPUESTA AUTOMÁTICA CON PALABRA CLAVE (adaptada) ===
+try {
+  const guarPath = path.resolve('./guar.json');
+  if (fs.existsSync(guarPath)) {
+    const guarData = JSON.parse(fs.readFileSync(guarPath, 'utf-8'));
+    const cleanText = messageContent
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w]/g, '');
+
+    for (const key of Object.keys(guarData)) {
+      const cleanKey = key
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w]/g, '');
+
+      if (cleanText === cleanKey && guarData[key]?.length) {
+        const item = guarData[key][Math.floor(Math.random() * guarData[key].length)];
+        const buffer = Buffer.from(item.media, "base64");
+        const extension = item.ext || item.mime?.split("/")[1] || "bin";
+        const mime = item.mime || "";
+
+        const options = { quoted: m };
+        let payload = {};
+
+        if (["jpg", "jpeg", "png"].includes(extension)) {
+          payload.image = buffer;
+        } else if (["mp4", "mkv", "webm"].includes(extension)) {
+          payload.video = buffer;
+        } else if (["mp3", "ogg", "opus"].includes(extension)) {
+          payload.audio = buffer;
+          payload.mimetype = mime || "audio/mpeg";
+          payload.ptt = false;
+        } else if (["webp"].includes(extension)) {
+          payload.sticker = buffer;
+        } else {
+          payload.document = buffer;
+          payload.mimetype = mime || "application/octet-stream";
+          payload.fileName = `archivo.${extension}`;
+        }
+
+        await sock.sendMessage(chatId, payload, options);
+        return;
+      }
+    }
+  }
+} catch (e) {
+  console.error("❌ Error en lógica de palabra clave:", e);
+}
+// === FIN DE LÓGICA ===  
+  
 // === ✅ INICIO LÓGICA DE APAGADO POR GRUPO (solo responde al dueño) ===
 try {
   const { getConfig } = requireFromRoot("db");
