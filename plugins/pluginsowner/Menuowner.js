@@ -32,6 +32,10 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}vergrupos
 │๛ ${pref}addowner
 │๛ ${pref}delowner
+│๛ ${pref}addfactura
+│๛ ${pref}delfactura
+│๛ ${pref}facpaga
+│๛ ${pref}verfac
 ╰─────◆
 
 🤖 *La Suki Bot - Modo Dios activado*
