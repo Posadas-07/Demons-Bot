@@ -121,6 +121,7 @@ async function generarFacturaNoPagadaPNG(f) {
 }
 
 function construirCaptionDetallado(f) {
+  // exactamente como lo pediste, con fechas formateadas
   return (
 `🧾 *FACTURA NO PAGADA*
 🆔 ID: ${f.id || "-"}
@@ -179,20 +180,12 @@ const handler = async (conn) => {
             const buffer = await generarFacturaNoPagadaPNG(f);
             const caption = construirCaptionDetallado(f);
 
-            const clienteNum = limpiarNumero(f.cliente?.numero);
-            const vendedorNum = limpiarNumero(f.vendedor?.numero);
-            const clienteJid = `${clienteNum}@s.whatsapp.net`;
-            const vendedorJid = `${vendedorNum}@s.whatsapp.net`;
+            const clienteJid = limpiarNumero(f.cliente?.numero) + "@s.whatsapp.net";
+            const vendedorJid = limpiarNumero(f.vendedor?.numero) + "@s.whatsapp.net";
 
-            // ✅ Enviar SIEMPRE a ambos (sin filtros por longitud)
-            if (clienteNum) {
-              try { await conn.sendMessage(clienteJid, { image: buffer, caption }); } 
-              catch (e) { console.error("[factura_watcher] Envío cliente:", e); }
-            }
-            if (vendedorNum) {
-              try { await conn.sendMessage(vendedorJid, { image: buffer, caption }); } 
-              catch (e) { console.error("[factura_watcher] Envío vendedor:", e); }
-            }
+            // Enviar a ambos
+            try { if (clienteJid.length > 15) await conn.sendMessage(clienteJid, { image: buffer, caption }); } catch (e) { console.error("[factura_watcher] Envío cliente:", e); }
+            try { if (vendedorJid.length > 15) await conn.sendMessage(vendedorJid, { image: buffer, caption }); } catch (e) { console.error("[factura_watcher] Envío vendedor:", e); }
 
           } catch (eItem) {
             console.error("[factura_watcher] Error generando/enviando recordatorio:", eItem);
