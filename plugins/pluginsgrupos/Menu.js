@@ -43,6 +43,10 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}sorteo
 │๛ ${pref}setsoporte / soporte
 │๛ ${pref}setpromo / promo
+│๛ ${pref}addfactura
+│๛ ${pref}delfactura
+│๛ ${pref}facpaga
+│๛ ${pref}verfac
 ╰─────◆
 
 𖠁𝙄𝘼 - 𝘾𝙃𝘼𝙏 𝘽𝙊𝙏𖠁
