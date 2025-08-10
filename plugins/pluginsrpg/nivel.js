@@ -53,6 +53,8 @@ const handler = async (msg, { conn }) => {
               `• .work\n` +
               `• .picar\n` +
               `• .correr\n` +
+              `• .talar\n` +
+              `• .cocinar\n` +
               `• .estudiar\n` +
               `• .claim\n` +
               `• .batallauser\n` +
