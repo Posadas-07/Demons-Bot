@@ -62,7 +62,7 @@ const handler = async (msg, { conn }) => {
   });
 
   texto += `📌 *Comandos para subir de nivel tus personajes:*\n`;
-  texto += `➤ .luchar  • .volar  • .enemigos  • .otromundo\n`;
+  texto += `➤ .luchar  • .volar  • .enemigos • .poder • .podermaximo • .otromundo\n`;
   texto += `➤ .otrouniverso  • .mododios  • .mododiablo  • .superpoder\n`;
   texto += `➤ .batallaanime\n`;
 
