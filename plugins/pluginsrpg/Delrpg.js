@@ -18,11 +18,28 @@ module.exports = async (msg, { conn }) => {
   let db = JSON.parse(fs.readFileSync(sukirpgPath));
   db.usuarios = db.usuarios || [];
   db.personajes = db.personajes || [];
+  db.banco = db.banco || null;
 
   const usuario = db.usuarios.find(u => u.numero === numero);
   if (!usuario) {
     return conn.sendMessage(chatId, {
       text: "❌ No estás registrado en el RPG. Usa `.rpg` para registrarte.",
+    }, { quoted: msg });
+  }
+
+  // 🚫 NUEVO: bloquear si tiene deuda activa en el banco
+  const tieneDeudaActiva = Array.isArray(db?.banco?.prestamos) && db.banco.prestamos.some(p => {
+    if (String(p.numero) !== numero || p.estado !== "activo") return false;
+    const prestadoBase = Number(p.cantidadSolicitada ?? p.cantidad ?? 0);
+    const totalAPagar = Number.isFinite(p.totalAPagar) ? Number(p.totalAPagar) : Math.ceil(prestadoBase * 1.20);
+    const pagado = Number(p.pagado || 0);
+    const pendiente = Number.isFinite(p.pendiente) ? Number(p.pendiente) : Math.max(totalAPagar - pagado, 0);
+    return pendiente > 0;
+  });
+
+  if (tieneDeudaActiva) {
+    return conn.sendMessage(chatId, {
+      text: "🏦 No puedes eliminar tu RPG porque tienes una *deuda activa* en el banco.\nPágala con *.pagarall* o espera a que el sistema la liquide.",
     }, { quoted: msg });
   }
 
@@ -69,11 +86,31 @@ module.exports = async (msg, { conn }) => {
           return;
         }
 
-        // Eliminar RPG
+        // Releer DB
         const sukirpgPath = path.join(process.cwd(), "sukirpg.json");
         let db = JSON.parse(fs.readFileSync(sukirpgPath));
         db.usuarios = db.usuarios || [];
         db.personajes = db.personajes || [];
+        db.banco = db.banco || null;
+
+        // 🚫 NUEVO: volver a verificar deuda por seguridad
+        const deudaActivaAhora = Array.isArray(db?.banco?.prestamos) && db.banco.prestamos.some(p => {
+          if (String(p.numero) !== job.numero || p.estado !== "activo") return false;
+          const prestadoBase = Number(p.cantidadSolicitada ?? p.cantidad ?? 0);
+          const totalAPagar = Number.isFinite(p.totalAPagar) ? Number(p.totalAPagar) : Math.ceil(prestadoBase * 1.20);
+          const pagado = Number(p.pagado || 0);
+          const pendiente = Number.isFinite(p.pendiente) ? Number(p.pendiente) : Math.max(totalAPagar - pagado, 0);
+          return pendiente > 0;
+        });
+
+        if (deudaActivaAhora) {
+          clearTimeout(job.timer);
+          delete pendingDelete[citado];
+          await conn.sendMessage(job.chatId, {
+            text: "🏦 No puedes eliminar tu RPG porque ahora tienes una *deuda activa* en el banco.\nPágala con *.pagarall* o espera a que el sistema la liquide.",
+          }, { quoted: m });
+          return;
+        }
 
         const idx = db.usuarios.findIndex(u => u.numero === job.numero);
         if (idx === -1) {
