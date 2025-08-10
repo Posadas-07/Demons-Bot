@@ -66,6 +66,7 @@ const handler = async (msg, { conn }) => {
   texto += `➤ .entrenar\n`;
   texto += `➤ .cazar\n`;
   texto += `➤ .presumir\n`;
+  texto += `➤ .pasear\n`;
   texto += `➤ .supermascota\n`;
   texto += `➤ .batallamascota\n`;
   texto += `➤ .mascota (para cambiar de mascota principal)\n`;
