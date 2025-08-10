@@ -18,7 +18,7 @@ function msAFormato(ms) {
   if (d) partes.push(`${d}d`);
   if (h) partes.push(`${h}h`);
   if (m) partes.push(`${m}m`);
-  if (!d && !h && sec) partes.push(`${sec}s`);
+  if (sec && !d && !h) partes.push(`${sec}s`);
   return partes.join(" ");
 }
 
@@ -34,10 +34,14 @@ const handler = async (msg, { conn, args }) => {
   db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
 
   const remitente = db.usuarios.find(u => u.numero === numeroSender);
-  if (!remitente) return conn.sendMessage(chatId, { text: "❌ No estás registrado en el RPG.", quoted: msg });
+  if (!remitente) {
+    return conn.sendMessage(chatId, { text: "❌ No estás registrado en el RPG.", quoted: msg });
+  }
 
-  // Detectar receptor y monto (respuesta o mención)
-  let receptorNumero, cantidad;
+  // Obtener receptor y cantidad (por respuesta o mención)
+  let receptorNumero;
+  let cantidad;
+
   if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
     receptorNumero = msg.message.extendedTextMessage.contextInfo.participant.replace(/\D/g, "");
     cantidad = parseInt(args[0], 10);
@@ -46,7 +50,7 @@ const handler = async (msg, { conn, args }) => {
     cantidad = parseInt(args[1], 10);
   } else {
     return conn.sendMessage(chatId, {
-      text: "✳️ Uso:\n• Responde al usuario: *.transferir <monto>*\n• O menciona: *.transferir @user <monto>*",
+      text: "✳️ Uso:\n• Responde al usuario: *.transferir <monto>*\n• O menciona al usuario: *.transferir @user <monto>*",
       quoted: msg
     });
   }
@@ -57,11 +61,12 @@ const handler = async (msg, { conn, args }) => {
   if (receptorNumero === numeroSender) {
     return conn.sendMessage(chatId, { text: "❌ No puedes transferirte a ti mismo.", quoted: msg });
   }
+
   if (!Number.isFinite(cantidad) || cantidad <= 0) {
     return conn.sendMessage(chatId, { text: "❌ Ingresa una cantidad válida mayor que 0.", quoted: msg });
   }
 
-  // Máximo por transferencia
+  // Límite por transferencia
   if (cantidad > MAX_POR_TRANSFERENCIA) {
     return conn.sendMessage(chatId, {
       text: `🚫 El máximo por transferencia es *${MAX_POR_TRANSFERENCIA}* créditos.`,
@@ -69,11 +74,13 @@ const handler = async (msg, { conn, args }) => {
     });
   }
 
+  // Verificar receptor
   const receptor = db.usuarios.find(u => u.numero === receptorNumero);
   if (!receptor) {
     return conn.sendMessage(chatId, { text: "❌ El usuario receptor no está registrado.", quoted: msg });
   }
 
+  // Saldo suficiente (solo saldo "afuera", no guardado)
   const saldoDisponible = Number(remitente.creditos || 0);
   if (saldoDisponible < cantidad) {
     return conn.sendMessage(chatId, {
@@ -82,24 +89,33 @@ const handler = async (msg, { conn, args }) => {
     });
   }
 
-  // === Límite por pareja (48h) SIN mostrar ventana/remaining ===
+  // === Control de ventana 48h por pareja emisor->receptor ===
   remitente.transferencias = remitente.transferencias || {};
+  // Estructura: transferencias[receptorNumero] = { desde: timestamp, total: number }
   let pair = remitente.transferencias[receptorNumero];
-  const ahora = Date.now();
 
+  const ahora = Date.now();
   if (!pair || (ahora - (pair.desde || 0)) >= VENTANA_MS) {
     // iniciar nueva ventana
     pair = { desde: ahora, total: 0 };
   }
 
-  // Si ya alcanzó el tope o este envío lo supera → bloquear y mostrar contador
-  const totalPosterior = Number(pair.total || 0) + cantidad;
-  if (pair.total >= MAX_POR_PAREJA_VENTANA || totalPosterior > MAX_POR_PAREJA_VENTANA) {
-    const faltaMs = (pair.desde + VENTANA_MS) - ahora;
+  // ¿Excede el cupo de la ventana?
+  const restanteVentana = Math.max(0, MAX_POR_PAREJA_VENTANA - Number(pair.total || 0));
+  if (restanteVentana <= 0) {
+    const espera = (pair.desde + VENTANA_MS) - ahora;
+    return conn.sendMessage(chatId, {
+      text: `⏳ Ya alcanzaste el tope de *${MAX_POR_PAREJA_VENTANA}* créditos para transferir a @${receptorNumero}.\nVuelve a intentarlo en *${msAFormato(espera)}*.`,
+      mentions: [`${receptorNumero}@s.whatsapp.net`],
+      quoted: msg
+    });
+  }
+  if (cantidad > restanteVentana) {
+    const espera = (pair.desde + VENTANA_MS) - ahora;
     return conn.sendMessage(chatId, {
       text:
-        `⛔ Ya alcanzaste el límite de *${MAX_POR_PAREJA_VENTANA}* créditos para transferir a @${receptorNumero}.\n` +
-        `🕒 Debes esperar *${msAFormato(faltaMs)}* para volver a transferirle.`,
+        `⚠️ A @${receptorNumero} solo puedes enviar *${restanteVentana}* créditos más dentro de esta ventana de 48h.\n` +
+        `• Espera *${msAFormato(espera)}* o intenta por un monto menor.`,
       mentions: [`${receptorNumero}@s.whatsapp.net`],
       quoted: msg
     });
@@ -109,13 +125,13 @@ const handler = async (msg, { conn, args }) => {
   remitente.creditos = saldoDisponible - cantidad;
   receptor.creditos = (receptor.creditos || 0) + cantidad;
 
-  // Actualizar ventana (sin mostrarla al usuario)
-  pair.total = totalPosterior;
+  // Actualizar ventana
+  pair.total = Number(pair.total || 0) + cantidad;
   remitente.transferencias[receptorNumero] = pair;
 
   fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
 
-  // === Factura visual (sin info de ventana) ===
+  // === Factura visual ===
   const fecha = new Date().toLocaleDateString("es-AR", {
     weekday: "long", year: "numeric", month: "long", day: "numeric"
   });
@@ -123,9 +139,11 @@ const handler = async (msg, { conn, args }) => {
   const canvas = createCanvas(900, 500);
   const ctx = canvas.getContext("2d");
 
+  // Fondo
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, 900, 500);
 
+  // Logo
   const logo = await loadImage("https://cdn.russellxz.click/9f08a046.jpeg");
   ctx.save();
   ctx.beginPath();
@@ -135,10 +153,12 @@ const handler = async (msg, { conn, args }) => {
   ctx.drawImage(logo, 20, 20, 120, 120);
   ctx.restore();
 
+  // Título
   ctx.fillStyle = "#000";
   ctx.font = "bold 32px Sans-serif";
   ctx.fillText("❦FACTURA DE TRANSFERENCIA❦", 180, 60);
 
+  // Datos
   ctx.font = "20px Sans-serif";
   ctx.fillText(`☛ Fecha: ${fecha}`, 180, 100);
   ctx.fillText(`☛ Remitente: ${remitente.nombre} ${remitente.apellido}`, 180, 140);
@@ -147,6 +167,7 @@ const handler = async (msg, { conn, args }) => {
   ctx.fillText(`☛ Saldo después: ${receptor.creditos}`, 180, 240);
   ctx.fillText(`☛ Cantidad Transferida: ${cantidad} créditos`, 180, 280);
 
+  // Texto verde final
   ctx.fillStyle = "#28a745";
   ctx.font = "bold 40px Sans-serif";
   ctx.fillText("✔ TRANSFERENCIA EXITOSA", 165, 350);
@@ -155,7 +176,12 @@ const handler = async (msg, { conn, args }) => {
 
   await conn.sendMessage(chatId, {
     image: buffer,
-    caption: `✅ Transferencia realizada.\n💸 *${remitente.nombre}* → *${receptor.nombre}*`,
+    caption:
+      `✅ La transferencia fue exitosa.\n` +
+      `💸 *${remitente.nombre}* → *${receptor.nombre}*\n` +
+      `⏳ Ventana con @${receptorNumero}: ` +
+      `${pair.total}/${MAX_POR_PAREJA_VENTANA} en 48h.`,
+    mentions: [`${receptorNumero}@s.whatsapp.net`],
     quoted: msg
   });
 
