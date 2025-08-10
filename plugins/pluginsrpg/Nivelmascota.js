@@ -35,6 +35,7 @@ const handler = async (msg, { conn }) => {
                 `• .entrenar\n` +
                 `• .cazar\n` +
                 `• .presumir\n` +
+                `• .pasear\n` +
                 `• .supermascota\n` +
                 `• .batallamascota\n` +
                 `• .mascota (para cambiar de mascota principal)`;
