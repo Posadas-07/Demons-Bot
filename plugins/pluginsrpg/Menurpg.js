@@ -39,6 +39,8 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}mododios
 │๛ ${pref}mododiablo
 │๛ ${pref}superpoder
+│๛ ${pref}poder
+│๛ ${pref}podermaximo
 ╰─────◆
 
 𖠁𝙈𝘼𝙎𝘾𝙊𝙏𝘼𝙎𖠁
@@ -48,6 +50,7 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}darcariño
 │๛ ${pref}entrenar
 │๛ ${pref}cazar
+│๛ ${pref}pasear
 │๛ ${pref}presumir
 │๛ ${pref}supermascota
 │๛ ${pref}batallamascota / ${pref}batallamas  — Retar
@@ -75,12 +78,15 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}estudiar
 │๛ ${pref}claim
 │๛ ${pref}cofre
+│๛ ${pref}talar
+│๛ ${pref}cocinar
+│๛ ${pref}robar
 ╰─────◆
 
 𖠁𝙏𝙄𝙀𝙉𝘿𝘼𝙎 & 𝘽𝘼𝙉𝘾𝙊𖠁
 ╭─────◆
 │๛ ${pref}tiendaper         — Tienda de personajes
-│๛ ${pref}tiendamascota     — Tienda de mascotas
+│๛ ${pref}tiendamascotas     — Tienda de mascotas
 │๛ ${pref}comprar           — Comprar personaje
 │๛ ${pref}comprarmas        — Comprar mascota
 │๛ ${pref}banco             — Ver/usar banco
