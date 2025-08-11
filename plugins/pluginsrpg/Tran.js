@@ -20,32 +20,7 @@ const handler = async (msg, { conn, args }) => {
     return conn.sendMessage(chatId, { text: "❌ No estás registrado en el RPG.", quoted: msg });
   }
 
-  // === BLOQUEO POR DEUDA ACTIVA EN EL BANCO ===
-  if (db.banco && Array.isArray(db.banco.prestamos)) {
-    const deudaActiva = db.banco.prestamos.find(p =>
-      String(p.numero) === numeroSender &&
-      String(p.estado || "activo") === "activo" &&
-      Number(p.pendiente || p.totalAPagar || 0) > 0
-    );
-    if (deudaActiva) {
-      const deudaPendiente = deudaActiva.pendiente || deudaActiva.totalAPagar || 0;
-      const fechaLimite = deudaActiva.fechaLimite ? new Date(deudaActiva.fechaLimite).toLocaleString() : "Sin fecha registrada";
-      return conn.sendMessage(chatId, {
-        text:
-`🚫 No puedes transferir créditos mientras tengas deuda activa.
-💳 No tienes ni pagar tu deuda en el banco y quieres transferir… *eres un mala paga*.
-
-🏦 *Banco de Suki*:
-• 📉 Deuda actual: *${deudaPendiente}* créditos
-• ⏳ Fecha límite de pago: *${fechaLimite}*
-
-📌 Usa *.pagarall* para saldar tu deuda y poder transferir nuevamente.`,
-        quoted: msg
-      });
-    }
-  }
-
-  // Obtener receptor y cantidad (por respuesta o mención)
+  // === Detectar receptor y monto (por respuesta o mención) ===
   let receptorNumero;
   let cantidad;
 
@@ -68,18 +43,36 @@ const handler = async (msg, { conn, args }) => {
   if (receptorNumero === numeroSender) {
     return conn.sendMessage(chatId, { text: "❌ No puedes transferirte a ti mismo.", quoted: msg });
   }
-
   if (!Number.isFinite(cantidad) || cantidad <= 0) {
     return conn.sendMessage(chatId, { text: "❌ Ingresa una cantidad válida mayor que 0.", quoted: msg });
   }
 
-  // Verificar receptor
+  // === Bloqueo por deuda activa en el banco ===
+  if (db.banco && Array.isArray(db.banco.prestamos)) {
+    const prestamoActivo = db.banco.prestamos.find(p => String(p.numero) === numeroSender && p.estado === "activo");
+    const pendiente = Number(prestamoActivo?.pendiente || 0);
+    if (prestamoActivo && pendiente > 0) {
+      const vence = prestamoActivo.fechaLimite ? new Date(prestamoActivo.fechaLimite).toLocaleString() : "—";
+      return conn.sendMessage(chatId, {
+        text:
+          `🚫 *No puedes transferir: tienes una deuda activa con el banco.*\n\n` +
+          `😒 *“No tienes ni pagar tu deuda y ya quieres transferir… mala paga.”*\n` +
+          `🏦 Banco de *La Suki* te espera con tu pago.\n\n` +
+          `🧮 *Deuda pendiente:* ${pendiente} créditos\n` +
+          `⏳ *Fecha límite:* ${vence}\n\n` +
+          `📌 Paga con: *.pagarall*`,
+        quoted: msg // ✅ ahora cita el mensaje original del usuario
+      });
+    }
+  }
+
+  // === Verificar receptor ===
   const receptor = db.usuarios.find(u => u.numero === receptorNumero);
   if (!receptor) {
     return conn.sendMessage(chatId, { text: "❌ El usuario receptor no está registrado.", quoted: msg });
   }
 
-  // Saldo suficiente
+  // === Saldo disponible ===
   const saldoDisponible = Number(remitente.creditos || 0);
   if (saldoDisponible < cantidad) {
     return conn.sendMessage(chatId, {
@@ -102,11 +95,9 @@ const handler = async (msg, { conn, args }) => {
   const canvas = createCanvas(900, 500);
   const ctx = canvas.getContext("2d");
 
-  // Fondo
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, 900, 500);
 
-  // Logo
   const logo = await loadImage("https://cdn.russellxz.click/9f08a046.jpeg");
   ctx.save();
   ctx.beginPath();
@@ -116,12 +107,10 @@ const handler = async (msg, { conn, args }) => {
   ctx.drawImage(logo, 20, 20, 120, 120);
   ctx.restore();
 
-  // Título
   ctx.fillStyle = "#000";
   ctx.font = "bold 32px Sans-serif";
   ctx.fillText("❦FACTURA DE TRANSFERENCIA❦", 180, 60);
 
-  // Datos
   ctx.font = "20px Sans-serif";
   ctx.fillText(`☛ Fecha: ${fecha}`, 180, 100);
   ctx.fillText(`☛ Remitente: ${remitente.nombre} ${remitente.apellido}`, 180, 140);
@@ -130,7 +119,6 @@ const handler = async (msg, { conn, args }) => {
   ctx.fillText(`☛ Saldo después: ${receptor.creditos}`, 180, 240);
   ctx.fillText(`☛ Cantidad Transferida: ${cantidad} créditos`, 180, 280);
 
-  // Texto verde final
   ctx.fillStyle = "#28a745";
   ctx.font = "bold 40px Sans-serif";
   ctx.fillText("✔ TRANSFERENCIA EXITOSA", 165, 350);
@@ -139,8 +127,7 @@ const handler = async (msg, { conn, args }) => {
 
   await conn.sendMessage(chatId, {
     image: buffer,
-    caption: `✅ La transferencia fue exitosa.\n💸 *${remitente.nombre}* → *${receptor.nombre}*`,
-    mentions: [`${receptorNumero}@s.whatsapp.net`],
+    caption: `✅ Transferencia realizada.\n💸 *${remitente.nombre}* → *${receptor.nombre}*`,
     quoted: msg
   });
 
