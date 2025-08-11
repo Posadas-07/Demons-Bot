@@ -1,6 +1,9 @@
+// plugins/prestamo.js
 const fs = require("fs");
 const path = require("path");
 const { createCanvas, loadImage } = require("canvas");
+
+const MAX_PRESTAMO = 250000; // Tope acumulado por préstamo activo
 
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.key.remoteJid;
@@ -65,6 +68,32 @@ const handler = async (msg, { conn, args }) => {
   db.banco.prestamos = Array.isArray(db.banco.prestamos) ? db.banco.prestamos : [];
   let prestamoActivo = db.banco.prestamos.find(p => p.numero === numero && p.estado === "activo");
 
+  // ====== VALIDACIÓN DEL TOPE ACUMULADO (250k) ======
+  if (prestamoActivo) {
+    const yaSolicitado = Number(prestamoActivo.cantidadSolicitada || 0);
+    const nuevoTotal = yaSolicitado + cantidad;
+    if (nuevoTotal > MAX_PRESTAMO) {
+      const restante = Math.max(0, MAX_PRESTAMO - yaSolicitado);
+      return conn.sendMessage(chatId, {
+        text:
+`🚫 *Tope de préstamo alcanzado.*
+🧮 Ya tienes solicitado: *${yaSolicitado}* créditos.
+🔝 Máximo permitido por préstamo: *${MAX_PRESTAMO}* créditos.
+${restante > 0 ? `👉 Aún puedes solicitar hasta *${restante}* créditos.` : "👉 Debes cancelar tu deuda para volver a pedir."}`,
+        quoted: msg
+      });
+    }
+  } else {
+    // Si es un préstamo nuevo, no se puede pedir más del tope en una sola vez
+    if (cantidad > MAX_PRESTAMO) {
+      return conn.sendMessage(chatId, {
+        text: `🚫 No puedes solicitar más de *${MAX_PRESTAMO}* créditos en un solo préstamo.`,
+        quoted: msg
+      });
+    }
+  }
+  // ====== FIN VALIDACIÓN TOPE ======
+
   const ahora = Date.now();
 
   // Crédito neto que recibe el usuario (siempre la cantidad solicitada)
@@ -91,7 +120,7 @@ const handler = async (msg, { conn, args }) => {
 
     fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
 
-    // Comprobante visual de AMPLIACIÓN
+    // Comprobante visual de AMPLIACIÓN (Canvas)
     try {
       const canvas = createCanvas(800, 500);
       const ctx = canvas.getContext("2d");
@@ -133,7 +162,7 @@ const handler = async (msg, { conn, args }) => {
         caption:
           `🧾 *Ampliación de préstamo aplicada*\n` +
           `💰 +${cantidad} créditos depositados.\n` +
-          `➕ Se suman *${extraConInteres}* créditos a tu deuda (con interés ${Math.round(tasaInteres * 100)}%).\n` +
+          `➕ Se suman *${extraConInteres}* créditos a tu deuda (interés ${Math.round(tasaInteres * 100)}%).\n` +
           `🧮 *Pendiente total ahora:* ${prestamoActivo.pendiente} créditos.\n` +
           `⏳ *Vence:* ${new Date(prestamoActivo.fechaLimite).toLocaleString()}\n\n` +
           `📌 Para pagar, usa: *.pagarall*`,
@@ -224,7 +253,7 @@ const handler = async (msg, { conn, args }) => {
         caption:
           `✅ *Préstamo aprobado*\n` +
           `💳 Se han depositado *${cantidad}* créditos.\n` +
-          `🧮 Total a pagar (con interés ${Math.round(tasaInteres * 100)}%): *${extraConInteres}*.\n\n` +
+          `🧮 Total a pagar (interés ${Math.round(tasaInteres * 100)}%): *${extraConInteres}*.\n\n` +
           `📌 Para pagar: *.pagarall*`,
         quoted: msg
       });
