@@ -3,25 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const { createCanvas, loadImage } = require("canvas");
 
-const MAX_POR_TRANSFERENCIA = 50000;
-const MAX_POR_PAREJA_VENTANA = 50000;
-const VENTANA_MS = 48 * 60 * 60 * 1000; // 48 horas
-
-function msAFormato(ms) {
-  if (ms <= 0) return "0s";
-  const s = Math.ceil(ms / 1000);
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const partes = [];
-  if (d) partes.push(`${d}d`);
-  if (h) partes.push(`${h}h`);
-  if (m) partes.push(`${m}m`);
-  if (sec && !d && !h) partes.push(`${sec}s`);
-  return partes.join(" ");
-}
-
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.key.remoteJid;
   const sender = msg.key.participant || msg.key.remoteJid;
@@ -32,10 +13,36 @@ const handler = async (msg, { conn, args }) => {
   const sukirpgPath = path.join(process.cwd(), "sukirpg.json");
   const db = fs.existsSync(sukirpgPath) ? JSON.parse(fs.readFileSync(sukirpgPath)) : {};
   db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
+  db.banco = db.banco || null;
 
   const remitente = db.usuarios.find(u => u.numero === numeroSender);
   if (!remitente) {
     return conn.sendMessage(chatId, { text: "❌ No estás registrado en el RPG.", quoted: msg });
+  }
+
+  // === BLOQUEO POR DEUDA ACTIVA EN EL BANCO ===
+  if (db.banco && Array.isArray(db.banco.prestamos)) {
+    const deudaActiva = db.banco.prestamos.find(p =>
+      String(p.numero) === numeroSender &&
+      String(p.estado || "activo") === "activo" &&
+      Number(p.pendiente || p.totalAPagar || 0) > 0
+    );
+    if (deudaActiva) {
+      const deudaPendiente = deudaActiva.pendiente || deudaActiva.totalAPagar || 0;
+      const fechaLimite = deudaActiva.fechaLimite ? new Date(deudaActiva.fechaLimite).toLocaleString() : "Sin fecha registrada";
+      return conn.sendMessage(chatId, {
+        text:
+`🚫 No puedes transferir créditos mientras tengas deuda activa.
+💳 No tienes ni pagar tu deuda en el banco y quieres transferir… *eres un mala paga*.
+
+🏦 *Banco de Suki*:
+• 📉 Deuda actual: *${deudaPendiente}* créditos
+• ⏳ Fecha límite de pago: *${fechaLimite}*
+
+📌 Usa *.pagarall* para saldar tu deuda y poder transferir nuevamente.`,
+        quoted: msg
+      });
+    }
   }
 
   // Obtener receptor y cantidad (por respuesta o mención)
@@ -66,21 +73,13 @@ const handler = async (msg, { conn, args }) => {
     return conn.sendMessage(chatId, { text: "❌ Ingresa una cantidad válida mayor que 0.", quoted: msg });
   }
 
-  // Límite por transferencia
-  if (cantidad > MAX_POR_TRANSFERENCIA) {
-    return conn.sendMessage(chatId, {
-      text: `🚫 El máximo por transferencia es *${MAX_POR_TRANSFERENCIA}* créditos.`,
-      quoted: msg
-    });
-  }
-
   // Verificar receptor
   const receptor = db.usuarios.find(u => u.numero === receptorNumero);
   if (!receptor) {
     return conn.sendMessage(chatId, { text: "❌ El usuario receptor no está registrado.", quoted: msg });
   }
 
-  // Saldo suficiente (solo saldo "afuera", no guardado)
+  // Saldo suficiente
   const saldoDisponible = Number(remitente.creditos || 0);
   if (saldoDisponible < cantidad) {
     return conn.sendMessage(chatId, {
@@ -89,45 +88,9 @@ const handler = async (msg, { conn, args }) => {
     });
   }
 
-  // === Control de ventana 48h por pareja emisor->receptor ===
-  remitente.transferencias = remitente.transferencias || {};
-  // Estructura: transferencias[receptorNumero] = { desde: timestamp, total: number }
-  let pair = remitente.transferencias[receptorNumero];
-
-  const ahora = Date.now();
-  if (!pair || (ahora - (pair.desde || 0)) >= VENTANA_MS) {
-    // iniciar nueva ventana
-    pair = { desde: ahora, total: 0 };
-  }
-
-  // ¿Excede el cupo de la ventana?
-  const restanteVentana = Math.max(0, MAX_POR_PAREJA_VENTANA - Number(pair.total || 0));
-  if (restanteVentana <= 0) {
-    const espera = (pair.desde + VENTANA_MS) - ahora;
-    return conn.sendMessage(chatId, {
-      text: `⏳ Ya alcanzaste el tope de *${MAX_POR_PAREJA_VENTANA}* créditos para transferir a @${receptorNumero}.\nVuelve a intentarlo en *${msAFormato(espera)}*.`,
-      mentions: [`${receptorNumero}@s.whatsapp.net`],
-      quoted: msg
-    });
-  }
-  if (cantidad > restanteVentana) {
-    const espera = (pair.desde + VENTANA_MS) - ahora;
-    return conn.sendMessage(chatId, {
-      text:
-        `⚠️ A @${receptorNumero} solo puedes enviar *${restanteVentana}* créditos más dentro de esta ventana de 48h.\n` +
-        `• Espera *${msAFormato(espera)}* o intenta por un monto menor.`,
-      mentions: [`${receptorNumero}@s.whatsapp.net`],
-      quoted: msg
-    });
-  }
-
   // === Ejecutar transferencia ===
   remitente.creditos = saldoDisponible - cantidad;
   receptor.creditos = (receptor.creditos || 0) + cantidad;
-
-  // Actualizar ventana
-  pair.total = Number(pair.total || 0) + cantidad;
-  remitente.transferencias[receptorNumero] = pair;
 
   fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
 
@@ -176,11 +139,7 @@ const handler = async (msg, { conn, args }) => {
 
   await conn.sendMessage(chatId, {
     image: buffer,
-    caption:
-      `✅ La transferencia fue exitosa.\n` +
-      `💸 *${remitente.nombre}* → *${receptor.nombre}*\n` +
-      `⏳ Ventana con @${receptorNumero}: ` +
-      `${pair.total}/${MAX_POR_PAREJA_VENTANA} en 48h.`,
+    caption: `✅ La transferencia fue exitosa.\n💸 *${remitente.nombre}* → *${receptor.nombre}*`,
     mentions: [`${receptorNumero}@s.whatsapp.net`],
     quoted: msg
   });
