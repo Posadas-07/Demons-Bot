@@ -3,6 +3,22 @@ const fs = require("fs");
 const path = require("path");
 const { createCanvas, loadImage } = require("canvas");
 
+// ⏳ igual que en banco
+function formatoTiempo(msRestante) {
+  if (!Number.isFinite(msRestante) || msRestante <= 0) return "⏳ Tiempo vencido";
+  const s = Math.floor(msRestante / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const partes = [];
+  if (d) partes.push(`${d}d`);
+  if (h) partes.push(`${h}h`);
+  if (m) partes.push(`${m}m`);
+  if (sec && !d && !h) partes.push(`${sec}s`);
+  return partes.join(" ");
+}
+
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.key.remoteJid;
   const sender = msg.key.participant || msg.key.remoteJid;
@@ -20,7 +36,7 @@ const handler = async (msg, { conn, args }) => {
     return conn.sendMessage(chatId, { text: "❌ No estás registrado en el RPG.", quoted: msg });
   }
 
-  // === Detectar receptor y monto (por respuesta o mención) ===
+  // === Detectar receptor y monto (respuesta o mención) ===
   let receptorNumero;
   let cantidad;
 
@@ -47,21 +63,30 @@ const handler = async (msg, { conn, args }) => {
     return conn.sendMessage(chatId, { text: "❌ Ingresa una cantidad válida mayor que 0.", quoted: msg });
   }
 
-  // === Bloqueo por deuda activa en el banco ===
+  // === Bloqueo por deuda activa (con fecha y cuenta regresiva) ===
   if (db.banco && Array.isArray(db.banco.prestamos)) {
     const prestamoActivo = db.banco.prestamos.find(p => String(p.numero) === numeroSender && p.estado === "activo");
     const pendiente = Number(prestamoActivo?.pendiente || 0);
     if (prestamoActivo && pendiente > 0) {
-      const vence = prestamoActivo.fechaLimite ? new Date(prestamoActivo.fechaLimite).toLocaleString() : "—";
+      const ahora = Date.now();
+      const venceMs = Number(prestamoActivo.fechaLimite || 0);
+      const tiempoRestante = formatoTiempo(venceMs - ahora);
+      const venceTxt = venceMs ? new Date(venceMs).toLocaleString() : "—";
+
+      // ⚠️ CITA el mensaje del usuario
       return conn.sendMessage(chatId, {
         text:
-          `🚫 *No puedes transferir: tienes una deuda activa con el banco.*\n\n` +
-          `😒 *“No tienes ni pagar tu deuda y ya quieres transferir… mala paga.”*\n` +
-          `🏦 Banco de *La Suki* te espera con tu pago.\n\n` +
-          `🧮 *Deuda pendiente:* ${pendiente} créditos\n` +
-          `⏳ *Fecha límite:* ${vence}\n\n` +
-          `📌 Paga con: *.pagarall*`,
-        quoted: msg // ✅ ahora cita el mensaje original del usuario
+`🚫 *No puedes transferir: tienes una deuda activa con el banco.*
+
+😒 *“No pagas tu deuda y ya quieres transferir… mala paga.”*
+🏦 *El Banco de La Suki* te espera con tu pago.
+
+🧮 *Deuda pendiente:* ${pendiente} créditos
+📅 *Fecha límite:* ${venceTxt}
+⏳ *Tiempo restante:* ${tiempoRestante}
+
+📌 Paga con: *.pagarall*`,
+        quoted: msg
       });
     }
   }
@@ -72,7 +97,7 @@ const handler = async (msg, { conn, args }) => {
     return conn.sendMessage(chatId, { text: "❌ El usuario receptor no está registrado.", quoted: msg });
   }
 
-  // === Saldo disponible ===
+  // === Saldo disponible (solo “afuera”) ===
   const saldoDisponible = Number(remitente.creditos || 0);
   if (saldoDisponible < cantidad) {
     return conn.sendMessage(chatId, {
@@ -128,7 +153,7 @@ const handler = async (msg, { conn, args }) => {
   await conn.sendMessage(chatId, {
     image: buffer,
     caption: `✅ Transferencia realizada.\n💸 *${remitente.nombre}* → *${receptor.nombre}*`,
-    quoted: msg
+    quoted: msg // también citamos el mensaje original en la confirmación
   });
 
   await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
