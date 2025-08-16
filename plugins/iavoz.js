@@ -14,7 +14,8 @@ const handler = async (m, { conn, text }) => {
   }
 
   try {
-    if (m?.key) await conn.sendMessage(m.chat, { react: { text: '🎤', key: m.key } });
+    const reactKey = m.key && (m.key.participant || m.key.remoteJid) ? m.key : null;
+    if (reactKey) await conn.sendMessage(m.chat, { react: { text: '🎤', key: reactKey } });
 
     const res = await fetch(`https://myapiadonix.vercel.app/api/adonixvoz?q=${encodeURIComponent(text)}`);
     if (!res.ok) throw new Error('No pude obtener audio de Adonix');
@@ -27,11 +28,13 @@ const handler = async (m, { conn, text }) => {
       ptt: true
     }, { quoted: m });
 
-    if (m?.key) await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
+    if (reactKey) await conn.sendMessage(m.chat, { react: { text: '✅', key: reactKey } });
 
   } catch (e) {
     console.error(e);
-    if (m?.key) await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
+    const reactKey = m.key && (m.key.participant || m.key.remoteJid) ? m.key : null;
+    if (reactKey) await conn.sendMessage(m.chat, { react: { text: '❌', key: reactKey } });
+
     await conn.sendMessage(m.chat, { text: '❌ Error al generar la voz, intentalo otra vez' }, { quoted: m });
   }
 };
