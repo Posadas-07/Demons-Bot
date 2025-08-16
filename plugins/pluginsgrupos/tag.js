@@ -153,5 +153,5 @@ const handler = async (msg, { conn, args }) => {
   }
 };
 
-handler.command = ["tag"];
+handler.command = ["tag", "n", "notify" ];
 module.exports = handler;
