@@ -139,6 +139,8 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}verdad / reto
 │๛ ${pref}personalidad
 │๛ ${pref}parejas / ship
+│๛ ${pref}kiss / topkiss
+│๛ ${pref}slap / topslap
 │๛ ${pref}menurpg
 ╰─────◆
 
