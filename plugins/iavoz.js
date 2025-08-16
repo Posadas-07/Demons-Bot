@@ -8,70 +8,44 @@ async function streamToBuffer(stream) {
   return Buffer.concat(chunks);
 }
 
-const handler = async (m, { conn, text }) => {
+const handler = async (msg, { conn, args, command }) => {
+  const chatId = msg.key.remoteJid;
+  const text = args.join(" ");
+
   if (!text) {
-    return conn.sendMessage(m.chat, { text: `🗣️ Mande un texto pa que Adonix le hable al toque` }, { quoted: m });
+    return conn.sendMessage(chatId, {
+      text: `⚠️ *Uso:* ${command} <texto>`,
+    }, { quoted: msg });
   }
 
   try {
-    if (m?.key?.id && m?.key?.remoteJid) {
-      await conn.sendMessage(m.chat, {
-        react: {
-          text: '🎤',
-          key: {
-            remoteJid: m.key.remoteJid,
-            id: m.key.id,
-            participant: m.key.participant || m.key.remoteJid
-          }
-        }
-      });
-    }
+    if (msg?.key?.id) await conn.sendMessage(chatId, { react: { text: "🎤", key: msg.key } });
 
     const res = await fetch(`https://myapiadonix.vercel.app/api/adonixvoz?q=${encodeURIComponent(text)}`);
     if (!res.ok) throw new Error('No pude obtener audio de Adonix');
 
     const bufferAudio = await streamToBuffer(res.body);
 
-    await conn.sendMessage(m.chat, {
+    await conn.sendMessage(chatId, {
       audio: bufferAudio,
       mimetype: 'audio/mpeg',
       ptt: true
-    }, { quoted: m });
+    }, { quoted: msg.key ? msg : null });
 
-    if (m?.key?.id && m?.key?.remoteJid) {
-      await conn.sendMessage(m.chat, {
-        react: {
-          text: '✅',
-          key: {
-            remoteJid: m.key.remoteJid,
-            id: m.key.id,
-            participant: m.key.participant || m.key.remoteJid
-          }
-        }
-      });
-    }
+    if (msg?.key?.id) await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
 
   } catch (e) {
-    console.error(e);
+    console.error("❌ Error en comando AI voz:", e);
 
-    if (m?.key?.id && m?.key?.remoteJid) {
-      await conn.sendMessage(m.chat, {
-        react: {
-          text: '❌',
-          key: {
-            remoteJid: m.key.remoteJid,
-            id: m.key.id,
-            participant: m.key.participant || m.key.remoteJid
-          }
-        }
-      });
-    }
+    if (msg?.key?.id) await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
 
-    await conn.sendMessage(m.chat, { text: '❌ Error al generar la voz, intentalo otra vez' }, { quoted: m });
+    await conn.sendMessage(chatId, {
+      text: "❌ Ocurrió un error al generar la voz, intentalo otra vez",
+    }, { quoted: msg });
   }
 };
 
 handler.command = ['iavoz'];
-handler.help = ['iavoz'];
 handler.tags = ['ia'];
+handler.help = ['iavoz <texto>'];
 module.exports = handler;
