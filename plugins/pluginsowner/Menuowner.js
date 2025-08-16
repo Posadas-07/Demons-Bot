@@ -38,6 +38,12 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}delfactura
 │๛ ${pref}facpaga
 │๛ ${pref}verfac
+│๛ ${pref}setmenu
+│๛ ${pref}setmenugrupo
+│๛ ${pref}setmenuowner
+│๛ ${pref}delmenu
+│๛ ${pref}delmenugrupo 
+│๛ ${pref}delmenuowner
 ╰─────◆
 
 🤖 *La Suki Bot - Modo Dios activado*
