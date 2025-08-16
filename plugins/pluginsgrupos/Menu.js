@@ -65,6 +65,8 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}play / play1 / play2 / play3
 │๛ ${pref}ytmp3 / ytmp4 / ytmp3doc / ytmp4doc
 │๛ ${pref}tiktok / fb / ig / spotify
+│๛ ${pref}kiss / topkiss
+│๛ ${pref}slap / topslap
 │๛ ${pref}mediafire / apk
 ╰─────◆
 
