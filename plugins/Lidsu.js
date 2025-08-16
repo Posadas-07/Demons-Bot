@@ -1,17 +1,17 @@
 // plugins/lidsu.js
-// Saca el **número REAL** del usuario CITADO en grupos LID,
-// usando la lógica del "lidParser" (si el participante trae .jid = real).
-// Si no hay cita, usa al autor del mensaje como objetivo.
+// Muestra LID y REAL del citado (o del autor si no hay cita)
 
-const DIGITS = (s = "") => (s || "").replace(/\D/g, "");
+const DIGITS = (s = "") => String(s || "").replace(/\D/g, "");
 
-/** Normaliza participantes: si id es @lid y hay .jid (real), usa .jid; si no, deja id tal cual */
+/** Normaliza: si id es @lid y en el wrapper viene .jid (real), usa ese real para 'id' */
 function lidParser(participants = []) {
   try {
     return participants.map(v => ({
-      id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid) ? v.jid : v.id,
+      id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid)
+        ? v.jid
+        : v.id,
       admin: v?.admin ?? null,
-      raw: v // guardamos ref cruda por si hace falta
+      raw: v
     }));
   } catch (e) {
     console.error("[lidsu] lidParser error:", e);
@@ -19,16 +19,65 @@ function lidParser(participants = []) {
   }
 }
 
-/** Intenta obtener el JID del citado desde varias rutas */
+/** Obtiene el posible JID citado desde varias rutas */
 function getQuotedKey(msg) {
-  const q = msg.quoted;
   const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const q = msg.quoted;
   return (
     q?.key?.participant ||
     q?.key?.jid ||
     (typeof ctx?.participant === "string" ? ctx.participant : null) ||
     null
   );
+}
+
+/** Resuelve el par {realJid, lidJid} a partir de cualquier JID (real o lid) */
+async function resolvePair(conn, chatId, anyJid) {
+  let realJid = null, lidJid = null;
+
+  const meta = await conn.groupMetadata(chatId);
+  const raw  = Array.isArray(meta?.participants) ? meta.participants : [];
+  const norm = lidParser(raw);
+
+  // Caso 1: vino como real
+  if (typeof anyJid === "string" && anyJid.endsWith("@s.whatsapp.net")) {
+    realJid = anyJid;
+    // Buscar su contraparte LID (si existe)
+    for (let i = 0; i < raw.length; i++) {
+      const n = norm[i]?.id;
+      const r = raw[i]?.id;
+      if (n === realJid && typeof r === "string" && r.endsWith("@lid")) {
+        lidJid = r;
+        break;
+      }
+    }
+  }
+
+  // Caso 2: vino como LID
+  if (!realJid && typeof anyJid === "string" && anyJid.endsWith("@lid")) {
+    lidJid = anyJid;
+    // 2.a) Si el wrapper trae .jid, úsalo
+    const idx = raw.findIndex(p => p?.id === anyJid);
+    if (idx >= 0) {
+      const wrapper = raw[idx];
+      if (typeof wrapper?.jid === "string" && wrapper.jid.endsWith("@s.whatsapp.net")) {
+        realJid = wrapper.jid;
+      } else if (typeof norm[idx]?.id === "string" && norm[idx].id.endsWith("@s.whatsapp.net")) {
+        realJid = norm[idx].id;
+      }
+    }
+    // 2.b) Fallback: busca por coincidencia entre raw/norm
+    if (!realJid) {
+      const hit = norm.find((n, i) =>
+        raw[i]?.id === anyJid &&
+        typeof n?.id === "string" &&
+        n.id.endsWith("@s.whatsapp.net")
+      );
+      if (hit) realJid = hit.id;
+    }
+  }
+
+  return { realJid, lidJid };
 }
 
 const handler = async (msg, { conn }) => {
@@ -38,68 +87,44 @@ const handler = async (msg, { conn }) => {
     return conn.sendMessage(chatId, { text: "❌ Usa este comando en un *grupo*." }, { quoted: msg });
   }
 
-  // Pequeña reacción
-  try { await conn.sendMessage(chatId, { react: { text: "🛰️", key: msg.key } }); } catch {}
+  try { await conn.sendMessage(chatId, { react: { text: "🔎", key: msg.key } }); } catch {}
 
-  // Metadata del grupo
-  let meta;
-  try {
-    meta = await conn.groupMetadata(chatId);
-  } catch (e) {
-    console.error("[lidsu] metadata error:", e);
-    return conn.sendMessage(chatId, { text: "❌ No pude leer la metadata del grupo." }, { quoted: msg });
-  }
-
-  const participants = Array.isArray(meta?.participants) ? meta.participants : [];
-  // Aplica lógica tipo "sock.lidParser"
-  const normalized = lidParser(participants);
-
-  // Objetivo: citado si existe; si no, autor
+  // Objetivo: citado → mención → autor
+  const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const mentioned = Array.isArray(ctx?.mentionedJid) ? ctx.mentionedJid : [];
   const quotedKey = getQuotedKey(msg);
-  const targetKey = quotedKey || msg.key.participant || msg.key.jid || msg.key.remoteJid;
+  const targetKey = quotedKey || mentioned[0] || msg.key.participant || msg.key.jid || msg.key.remoteJid;
 
   if (!targetKey) {
     return conn.sendMessage(chatId, { text: "❌ No pude identificar al usuario objetivo." }, { quoted: msg });
   }
 
-  let realJid = null;
+  try {
+    const { realJid, lidJid } = await resolvePair(conn, chatId, targetKey);
 
-  if (typeof targetKey === "string" && targetKey.endsWith("@s.whatsapp.net")) {
-    // Ya es visible (grupo no-lid o cita visible en lid)
-    realJid = targetKey;
-  } else if (typeof targetKey === "string" && targetKey.endsWith("@lid")) {
-    // Buscar ese miembro en la lista cruda por índice y/o por id
-    const idx = participants.findIndex(p => p?.id === targetKey);
-    if (idx >= 0) {
-      const raw = participants[idx];
-      // Si el wrapper trae .jid con el real, úsalo
-      if (typeof raw?.jid === "string" && raw.jid.endsWith("@s.whatsapp.net")) {
-        realJid = raw.jid;
-      } else {
-        // Si nuestro parser normalizó ese índice a real, úsalo
-        const maybeReal = normalized[idx]?.id;
-        if (typeof maybeReal === "string" && maybeReal.endsWith("@s.whatsapp.net")) {
-          realJid = maybeReal;
-        }
-      }
-    }
-    // Fallback: si no está por índice, intenta por búsqueda en normalizados
+    // Si no hay real, no podemos mostrar número real
     if (!realJid) {
-      const hit = normalized.find(n => n?.raw?.id === targetKey && typeof n?.id === "string" && n.id.endsWith("@s.whatsapp.net"));
-      if (hit) realJid = hit.id;
+      return conn.sendMessage(chatId, { text: "❌ No pude resolver el *JID real* del usuario." }, { quoted: msg });
     }
+
+    const numeroReal = DIGITS(realJid);
+    const estado = lidJid ? "Con LID (número oculto)" : "Sin LID (número visible)";
+
+    const texto =
+`📡 *Datos del usuario*
+• Estado: ${estado}
+• Número real: +${numeroReal}
+• JID real: \`${realJid}\`
+• JID LID: \`${lidJid || "—"}\``;
+
+    const mentionId = realJid; // menciona al real
+    await conn.sendMessage(chatId, { text: texto, mentions: [mentionId] }, { quoted: msg });
+    try { await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } }); } catch {}
+  } catch (e) {
+    console.error("[lidsu] error:", e);
+    await conn.sendMessage(chatId, { text: "❌ Ocurrió un error al resolver los datos." }, { quoted: msg });
   }
-
-  if (!realJid) {
-    return conn.sendMessage(chatId, { text: "❌ No pude resolver el *número real* del citado." }, { quoted: msg });
-  }
-
-  const numero = DIGITS(realJid);
-  const texto = `📡 *Real del citado*\n📱 +${numero}\n🔑 JID: \`${realJid}\``;
-
-  await conn.sendMessage(chatId, { text: texto }, { quoted: msg });
-  try { await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } }); } catch {}
 };
 
-handler.command = ["lidsu"];
+handler.command = ["mylid"];
 module.exports = handler;
