@@ -1,44 +1,63 @@
 const fetch = require('node-fetch');
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) return conn.reply(m.chat, `♻️ *Uso:* ${usedPrefix + command} < prompt del video >`, m);
+const handler = async (msg, { conn, args, command }) => {
+  const chatId = msg.key.remoteJid;
+  const text = args.join(" ");
+  const participant = msg.key.participant || msg.key.remoteJid;
+
+  if (!text) {
+    return conn.sendMessage(chatId, {
+      text: `⚠️ *Uso:* ${command} <prompt del video>`,
+    }, { quoted: msg });
+  }
 
   try {
     
-    await conn.sendMessage(m.chat, { react: { text: '🕕', key: m.key } });
+    if (msg?.key) await conn.sendMessage(chatId, { react: { text: "🎨", key: msg.key } });
+    if (msg?.key) await conn.sendMessage(chatId, { react: { text: "🕕", key: msg.key } });
 
-    let apiURL = `https://myapiadonix.vercel.app/api/veo3?prompt=${encodeURIComponent(text)}&apikey=adonixveo3`;
+   
+    const apiURL = `https://myapiadonix.vercel.app/api/veo3?prompt=${encodeURIComponent(text)}&apikey=adonixveo3`;
+    const res = await fetch(apiURL);
+    const json = await res.json();
 
-    let res = await fetch(apiURL);
-    let json = await res.json();
+    if (!json.success || !json.video_url) throw new Error(json.message || "No se pudo generar el video");
 
-    if (!json.success || !json.video_url) throw new Error(json.message || 'No se pudo generar el video');
+    
+    const videoRes = await fetch(json.video_url);
+    const buffer = await videoRes.arrayBuffer().then(ab => Buffer.from(ab));
 
-    let video = await fetch(json.video_url);
-    let buffer = await video.buffer();
-
-    await conn.sendMessage(m.chat, { 
-      video: buffer, 
+    
+    await conn.sendMessage(chatId, {
+      video: buffer,
       caption: `
 ━━━━━━━━━━━━━━
 🎬 *VIDEO GENERADO*
 ━━━━━━━━━━━━━━
-📌 *Prompt:* ${json.prompt}\n🦖 *API: myapiadonix.vercel.app*
+📌 *Prompt:* ${json.prompt}
+🦖 *API:* myapiadonix.vercel.app
 ━━━━━━━━━━━━━━
-`, 
-      gifPlayback: false 
-    }, { quoted: m });
+      `,
+      gifPlayback: false
+    }, { quoted: msg.key ? msg : null });
 
     
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
+    if (msg?.key) await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
 
-  } catch (e) {
-    await conn.sendMessage(m.chat, { react: { text: '⚠️', key: m.key } });
+  } catch (err) {
+    console.error("❌ Error en comando AI video:", err);
+
+    if (msg?.key) {
+      await conn.sendMessage(chatId, { react: { text: "⚠️", key: msg.key } });
+    }
+
+    conn.sendMessage(chatId, {
+      text: "❌ Ocurrió un error al generar el video.",
+    }, { quoted: msg });
   }
 };
 
-handler.help = ['aivideo'];
-handler.tags = ['ia'];
-handler.command = ['aivideo', 'videoai', 'iavideo'];
-
+handler.command = ["aivideo", "videoai", "iavideo"];
+handler.tags = ["ia"];
+handler.help = ["aivideo <prompt>"];
 module.exports = handler;
