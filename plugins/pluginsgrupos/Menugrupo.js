@@ -31,6 +31,8 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}antidelete on/off
 │๛ ${pref}antiarabe on/off
 │๛ ${pref}configrupo
+│๛ ${pref}addco / comando a Stikerz
+│๛ ${pref}delco / elimina comandos en s
 ╰─────◆
 
 🛡️ *ADMINISTRACIÓN*
