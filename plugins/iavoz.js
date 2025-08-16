@@ -10,11 +10,11 @@ async function streamToBuffer(stream) {
 
 const handler = async (m, { conn, text }) => {
   if (!text) {
-    return conn.sendMessage(m.chat, { text: `🗣️ Mande un texto pa hablar con la IA.` }, { quoted: m });
+    return conn.sendMessage(m.chat, { text: `🗣️ Mande un texto pa que Adonix le hable al toque` }, { quoted: m });
   }
 
   try {
-    await conn.sendPresenceUpdate('recording', m.chat);
+    if (m?.key) await conn.sendMessage(m.chat, { react: { text: '🎤', key: m.key } });
 
     const res = await fetch(`https://myapiadonix.vercel.app/api/adonixvoz?q=${encodeURIComponent(text)}`);
     if (!res.ok) throw new Error('No pude obtener audio de Adonix');
@@ -27,8 +27,11 @@ const handler = async (m, { conn, text }) => {
       ptt: true
     }, { quoted: m });
 
+    if (m?.key) await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
+
   } catch (e) {
     console.error(e);
+    if (m?.key) await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
     await conn.sendMessage(m.chat, { text: '❌ Error al generar la voz, intentalo otra vez' }, { quoted: m });
   }
 };
