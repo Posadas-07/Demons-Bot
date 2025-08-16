@@ -1,12 +1,45 @@
+// plugins/menu.js
+const fs = require("fs");
+const path = require("path");
+
 const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
-  const pref = global.prefixes?.[0] || ".";
+  const pref = (Array.isArray(global.prefixes) && global.prefixes[0]) || ".";
 
-  // Reacción al usar el comando
-  await conn.sendMessage(chatId, {
-    react: { text: "✨", key: msg.key }
-  });
+  // ✨ reacción
+  try { await conn.sendMessage(chatId, { react: { text: "✨", key: msg.key } }); } catch {}
 
+  // 1) Intentar menú personalizado global (setmenu.json)
+  try {
+    const filePath = path.resolve("./setmenu.json");
+    if (fs.existsSync(filePath)) {
+      const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      const texto  = typeof data?.texto === "string" ? data.texto : "";
+      const imagen = typeof data?.imagen === "string" && data.imagen.length ? data.imagen : null;
+
+      // Si hay algo que mostrar (texto o imagen)
+      if (texto.trim().length || imagen) {
+        if (imagen) {
+          // enviar imagen + caption (si hay texto)
+          const buffer = Buffer.from(imagen, "base64");
+          await conn.sendMessage(chatId, {
+            image: buffer,
+            caption: texto && texto.length ? texto : undefined
+          }, { quoted: msg });
+          return;
+        } else {
+          // enviar solo texto
+          await conn.sendMessage(chatId, { text: texto }, { quoted: msg });
+          return;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[menu] Error leyendo setmenu.json:", e);
+    // Si falla, seguimos con el menú oficial
+  }
+
+  // 2) Menú oficial por defecto
   const caption = `𖠺𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡𖠺
 
 𖠁𝙈𝙀𝙉𝙐 𝙂𝙀𝙉𝙀𝙍𝘼𝙇𖠁
@@ -113,14 +146,14 @@ const handler = async (msg, { conn }) => {
 `.trim();
 
   await conn.sendMessage(chatId, {
-    video: { url: 'https://cdn.russellxz.click/a289f34c.mp4' },
+    video: { url: "https://cdn.russellxz.click/a289f34c.mp4" },
     gifPlayback: true,
     caption
   }, { quoted: msg });
 };
 
-handler.command = ['menu'];
-handler.help = ['menu'];
-handler.tags = ['menu'];
+handler.command = ["menu"];
+handler.help = ["menu"];
+handler.tags = ["menu"];
 
 module.exports = handler;
