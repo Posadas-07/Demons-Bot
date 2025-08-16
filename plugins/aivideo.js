@@ -1,11 +1,11 @@
 const fetch = require('node-fetch');
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) return conn.reply(m.chat, `⚠️ *Uso:* ${usedPrefix + command} <texto del video>`, m);
+  if (!text) return conn.reply(m.chat, `♻️ *Uso:* ${usedPrefix + command} < prompt del video >`, m);
 
   try {
     
-    await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } });
+    await conn.sendMessage(m.chat, { react: { text: '🕕', key: m.key } });
 
     let apiURL = `https://myapiadonix.vercel.app/api/veo3?prompt=${encodeURIComponent(text)}&apikey=adonixveo3`;
 
