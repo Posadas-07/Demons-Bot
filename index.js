@@ -171,20 +171,17 @@ sock.ev.on("messages.upsert", async ({ messages }) => {
   const fromMe = m.key.fromMe || sender === sock.user.id;
   const isGroup = chatId.endsWith("@g.us");
 
-  const messageContent =
-    m.message?.conversation ||
-    m.message?.extendedTextMessage?.text ||
-    m.message?.imageMessage?.caption ||
-    m.message?.videoMessage?.caption ||
-    "";
+  let messageContent =
+  m.message?.conversation ||
+  m.message?.extendedTextMessage?.text ||
+  m.message?.imageMessage?.caption ||
+  m.message?.videoMessage?.caption ||
+  "";
 
   console.log(chalk.yellow(`\n📩 Nuevo mensaje recibido`));
   console.log(chalk.green(`📨 De: ${fromMe ? "[Tú]" : "[Usuario]"} ${chalk.bold(sender)}`));
   console.log(chalk.cyan(`💬 Tipo: ${Object.keys(m.message)[0]}`));
   console.log(chalk.cyan(`💬 Texto: ${chalk.bold(messageContent || "📂 (Multimedia)")}`));
-
-
-  
 
 // === Normalizar CITADO y MENCIONES → JID REAL + @numero (LID / NO-LID) ===
 await (async () => {
@@ -360,7 +357,78 @@ await (async () => {
   }
 })();
   
-  
+
+/* === STICKER → COMANDO (GLOBAL) usando ./comandos.json — para Suki === */
+try {
+  const st =
+    m.message?.stickerMessage ||
+    m.message?.ephemeralMessage?.message?.stickerMessage ||
+    null;
+
+  if (st && fs.existsSync("./comandos.json")) {
+    // 1) Generar CLAVES posibles para el sticker (base64 y "126,67,...")
+    const rawSha = st.fileSha256 || st.fileSha256Hash || st.filehash;
+    const candidates = [];
+
+    if (rawSha) {
+      if (Buffer.isBuffer(rawSha)) {
+        candidates.push(rawSha.toString("base64"));              // base64 (Buffer)
+        candidates.push(Array.from(rawSha).toString());          // "126,67,..."
+      } else if (ArrayBuffer.isView(rawSha)) { // Uint8Array, etc.
+        const buf = Buffer.from(rawSha);
+        candidates.push(buf.toString("base64"));
+        candidates.push(Array.from(rawSha).toString());
+      } else if (typeof rawSha === "string") {
+        candidates.push(rawSha); // ya viene como string
+      }
+    }
+
+    // 2) Buscar comando en ./comandos.json probando todas las claves
+    let mapped = null;
+    const map = JSON.parse(fs.readFileSync("./comandos.json", "utf-8") || "{}") || {};
+    for (const k of candidates) {
+      if (k && typeof map[k] === "string" && map[k].trim()) {
+        mapped = map[k].trim();
+        break;
+      }
+    }
+
+    if (mapped) {
+      // 3) Asegurar prefijo si el comando se guardó sin prefijo
+      const ensurePrefixed = (t) => {
+        const pref = (Array.isArray(global.prefixes) && global.prefixes[0]) || ".";
+        return (Array.isArray(global.prefixes) && global.prefixes.some(p => t.startsWith(p)))
+          ? t
+          : (pref + t);
+      };
+      const injectedText = ensurePrefixed(mapped);
+
+      // 4) Inyectar el "texto" del comando en el mensaje
+      //    (agregamos extendedTextMessage PERO conservamos stickerMessage para que otras lógicas sigan viéndolo como sticker)
+      const ctx = st.contextInfo || {};
+      m.message.extendedTextMessage = {
+        text: injectedText,
+        contextInfo: {
+          quotedMessage: ctx.quotedMessage || null,
+          participant: ctx.participant || null,
+          stanzaId: ctx.stanzaId || "",
+          remoteJid: ctx.remoteJid || m.key.remoteJid,
+          mentionedJid: Array.isArray(ctx.mentionedJid) ? ctx.mentionedJid : []
+        }
+      };
+
+      // 5) Actualizar el buffer de texto que usa el parser de comandos
+      messageContent = injectedText;
+
+      // (Opcional) marcas de depuración
+      m._stickerCmdInjected = true;
+      m._stickerCmdText = injectedText;
+    }
+  }
+} catch (e) {
+  console.error("❌ Sticker→cmd error:", e);
+}
+/* === FIN STICKER → COMANDO === */
   
   //fin de la logica modo admins         
 // ——— Presentación automática (solo una vez por grupo) ———
