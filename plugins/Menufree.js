@@ -2,8 +2,7 @@ const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
   const pref = global.prefixes?.[0] || ".";
 
-  // Reacción al usar el comando
-  await conn.sendMessage(chatId, { react: { text: "📋", key: msg.key } });
+  await conn.sendMessage2(chatId, { react: { text: "📋", key: msg.key } }, msg);
 
   const texto = `𖠺𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡𖠺
 
@@ -37,10 +36,10 @@ const handler = async (msg, { conn }) => {
 
 🤖 *La Suki Bot*`.trim();
 
-  await conn.sendMessage(chatId, {
+  await conn.sendMessage2(chatId, {
     image: { url: 'https://cdn.russellxz.click/bdd4fca0.jpeg' },
     caption: texto
-  }, { quoted: msg });
+  }, msg);
 };
 
 handler.command = ['menufree'];
