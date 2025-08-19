@@ -1,4 +1,3 @@
-// plugins/menugrupo.js
 const fs = require("fs");
 const path = require("path");
 
@@ -6,10 +5,8 @@ const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
   const pref = global.prefixes?.[0] || ".";
 
-  // Reacción al usar el comando
-  try { await conn.sendMessage(chatId, { react: { text: "✨", key: msg.key } }); } catch {}
+  try { await conn.sendMessage2(chatId, { react: { text: "✨", key: msg.key } }, msg); } catch {}
 
-  // 1) Buscar menú personalizado global en setmenu.json
   let customText = null;
   let customImgB64 = null;
 
@@ -28,27 +25,24 @@ const handler = async (msg, { conn }) => {
     console.error("[menugrupo] error leyendo setmenu.json:", e);
   }
 
-  // 2) Si hay personalizado, mandarlo y salir
   if (customText || customImgB64) {
     try {
       if (customImgB64) {
         const buf = Buffer.from(customImgB64, "base64");
-        await conn.sendMessage(
+        await conn.sendMessage2(
           chatId,
           { image: buf, caption: customText || "" },
-          { quoted: msg }
+          msg
         );
       } else {
-        await conn.sendMessage(chatId, { text: customText }, { quoted: msg });
+        await conn.sendMessage2(chatId, { text: customText }, msg);
       }
     } catch (e) {
       console.error("[menugrupo] error enviando personalizado:", e);
-      // si falla por algún motivo, caemos al menú oficial abajo
     }
     return;
   }
 
-  // 3) Menú oficial por defecto (fallback)
   const caption = `╔════════════════╗
      💠 𝙱𝙸𝙴𝙽𝚅𝙴𝙽𝙸𝙳𝙾 💠
 ╚════════════════╝
@@ -106,14 +100,14 @@ const handler = async (msg, { conn }) => {
 🤖 *La Suki Bot - Panel de control grupal*
 `.trim();
 
-  await conn.sendMessage(
+  await conn.sendMessage2(
     chatId,
     {
       video: { url: "https://cdn.russellxz.click/29906d1e.mp4" },
       gifPlayback: true,
       caption
     },
-    { quoted: msg }
+    msg
   );
 };
 
