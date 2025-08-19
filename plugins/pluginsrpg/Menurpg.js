@@ -1,9 +1,8 @@
-// plugins/menurpg.js
 const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
   const pref = (global?.prefixes?.[0]) || (global?.prefix) || ".";
 
-  await conn.sendMessage(chatId, { react: { text: "✨", key: msg.key } });
+  await conn.sendMessage2(chatId, { react: { text: "✨", key: msg.key } }, msg);
 
   const caption = `𖠺𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡 — 𝙈𝙀𝙉𝙐 𝙍𝙋𝙂𖠺
 
@@ -109,16 +108,16 @@ const handler = async (msg, { conn }) => {
 
 ✨ Disfruta el mundo RPG de *La Suki Bot*. ¡Suerte, héroe!`;
 
-  await conn.sendMessage(
+  await conn.sendMessage2(
     chatId,
     {
       image: { url: "https://cdn.russellxz.click/d744b5bf.jpeg" },
       caption
     },
-    { quoted: msg }
+    msg
   );
 
-  await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
+  await conn.sendMessage2(chatId, { react: { text: "✅", key: msg.key } }, msg);
 };
 
 handler.command = ["menurpg", "menuRPG"];
