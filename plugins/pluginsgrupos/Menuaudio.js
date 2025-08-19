@@ -4,9 +4,9 @@ const path = require("path");
 const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
 
-  await conn.sendMessage(chatId, {
+  await conn.sendMessage2(chatId, {
     react: { text: "🎵", key: msg.key }
-  });
+  }, msg);
 
   const guarPath = path.resolve("./guar.json");
   const guarData = fs.existsSync(guarPath)
@@ -50,11 +50,11 @@ ${
 }
 `.trim();
 
-  await conn.sendMessage(chatId, {
+  await conn.sendMessage2(chatId, {
     video: { url: 'https://cdn.russellxz.click/18bf4be2.mp4' },
     gifPlayback: true,
     caption
-  }, { quoted: msg });
+  }, msg);
 };
 
 handler.command = ["menuaudio"];
