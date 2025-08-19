@@ -37,7 +37,7 @@ const handler = async (msg, { conn }) => {
 
 🤖 *La Suki Bot*`.trim();
 
-  await conn.sendMessage2(chatId, {
+  await conn.sendMessage(chatId, {
     image: { url: 'https://cdn.russellxz.click/bdd4fca0.jpeg' },
     caption: texto
   }, { quoted: msg });
