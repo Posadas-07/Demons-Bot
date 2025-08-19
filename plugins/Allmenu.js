@@ -1,12 +1,9 @@
-// plugins/allmenu.js
 const handler = async (msg, { conn }) => {
   const chatId  = msg.key.remoteJid;
   const prefijo = global.prefixes?.[0] || ".";
 
-  // Reacción
-  await conn.sendMessage(chatId, { react: { text: "🧩", key: msg.key } });
+  await conn.sendMessage2(chatId, { react: { text: "🧩", key: msg.key } }, msg);
 
-  // Extraer comandos (solo strings), únicos y ordenados
   const todosLosComandos = [
     ...new Set(
       (global.plugins || [])
@@ -36,11 +33,10 @@ ${todosLosComandos.map(c => `➤ ${prefijo}${c}`).join("\n")}
 💫 *Gracias por usar suki Omega.*
 `.trim();
 
-  // Enviar imagen con el menú
-  return conn.sendMessage(chatId, {
+  return conn.sendMessage2(chatId, {
     image: { url: "https://cdn.russellxz.click/40df9bcb.jpeg" },
     caption
-  }, { quoted: msg });
+  }, msg);
 };
 
 handler.command = ["allmenu"];
