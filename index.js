@@ -1,3 +1,43 @@
+let canalId = ["120363266665814365@newsletter"];  
+let canalNombre = ["👾 SUKI BOT 👾"]
+  function setupConnection(conn) {
+  conn.sendMessage2 = async (chat, content, m, options = {}) => {
+    const firstChannel = { 
+      id: canalId[0], 
+      nombre: canalNombre[0] 
+    };
+    if (content.sticker) {
+      return conn.sendMessage(chat, { 
+        sticker: content.sticker 
+      }, { 
+        quoted: m,
+        ...options 
+      });
+    }
+    const messageOptions = {
+      ...content,
+      mentions: content.mentions || options.mentions || [],
+      contextInfo: {
+        ...(content.contextInfo || {}),
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: firstChannel.id,
+          serverMessageId: '',
+          newsletterName: firstChannel.nombre
+        },
+        forwardingScore: 9999999,
+        isForwarded: true,
+        mentionedJid: content.mentions || options.mentions || []
+      }
+    };
+
+    return conn.sendMessage(chat, messageOptions, {
+      quoted: m,
+      ephemeralExpiration: 86400000,
+      disappearingMessagesInChat: 86400000,
+      ...options
+    });
+  };
+  }
 const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = require("@whiskeysockets/baileys");
 const { readdirSync } = require("fs");
 const fs = require("fs");
@@ -99,6 +139,7 @@ let phoneNumber = "";
         browser: method === "1" ? ["AzuraBot", "Safari", "1.0.0"] : ["Ubuntu", "Chrome", "20.0.04"],
         printQRInTerminal: method === "1",
       });
+      setupConnection(sock)
 // 🔧 Normaliza participants: si id es @lid y existe .jid (real), reemplaza por el real
 sock.lidParser = function (participants = []) {
   try {
