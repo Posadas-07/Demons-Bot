@@ -1,4 +1,3 @@
-// plugins/menuowner.js
 const fs = require("fs");
 const path = require("path");
 
@@ -6,12 +5,10 @@ const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
   const pref = global.prefixes?.[0] || ".";
 
-  // Reacción única
-  await conn.sendMessage(chatId, {
+  await conn.sendMessage2(chatId, {
     react: { text: "👑", key: msg.key }
-  });
+  }, msg);
 
-  // 1) Intentar menú personalizado global (setmenu.json → texto_owner / imagen_owner)
   try {
     const filePath = path.resolve("./setmenu.json");
     if (fs.existsSync(filePath)) {
@@ -20,24 +17,21 @@ const handler = async (msg, { conn }) => {
       const imgB64   = data.imagen_owner || null;
 
       if ((rawTexto && rawTexto.trim()) || imgB64) {
-        // Reemplaza {pref} por el prefijo actual
         const caption = (rawTexto || "").replace(/\{pref\}/g, pref).trim();
 
         if (imgB64) {
           const buffer = Buffer.from(imgB64, "base64");
-          await conn.sendMessage(chatId, { image: buffer, caption: caption || undefined }, { quoted: msg });
+          await conn.sendMessage2(chatId, { image: buffer, caption: caption || undefined }, msg);
         } else {
-          await conn.sendMessage(chatId, { text: caption || " " }, { quoted: msg });
+          await conn.sendMessage2(chatId, { text: caption || " " }, msg);
         }
-        return; // ✅ Se envió el personalizado; no seguir
+        return;
       }
     }
   } catch (e) {
     console.error("[menuowner] Error leyendo menú owner personalizado:", e);
-    // Si falla, seguimos con el oficial
   }
 
-  // 2) Menú oficial (fallback)
   const caption = `╔════════════════╗
    👑 𝙼𝙴𝙽𝚄 𝙳𝙴 𝙾𝚆𝙽𝙴𝚁 👑
 ╚════════════════╝
@@ -80,11 +74,11 @@ const handler = async (msg, { conn }) => {
 🤖 *La Suki Bot - Modo Dios activado*
 `.trim();
 
-  await conn.sendMessage(chatId, {
+  await conn.sendMessage2(chatId, {
     video: { url: "https://cdn.russellxz.click/a0b60c86.mp4" },
     gifPlayback: true,
     caption
-  }, { quoted: msg });
+  }, msg);
 };
 
 handler.command = ["menuowner", "ownermenu"];
