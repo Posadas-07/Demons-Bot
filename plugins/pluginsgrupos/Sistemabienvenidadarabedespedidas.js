@@ -5,7 +5,53 @@ const { createCanvas, loadImage } = require("canvas");
 const { getConfig } = requireFromRoot("db");
 // Cache global de admins por chat
 const adminCache = {};
+// ==== HELPERS LID/REAL ====
+const DIGITS = (s = "") => String(s || "").replace(/\D/g, "");
 
+/** Si id es @lid y existe .jid (real), usa el real */
+function lidParser(participants = []) {
+  try {
+    return participants.map(v => ({
+      id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid)
+        ? v.jid
+        : v.id,
+      admin: v?.admin ?? null,
+      raw: v
+    }));
+  } catch {
+    return participants || [];
+  }
+}
+
+/** Con metadata y un JID (real o @lid) → { realJid, lidJid, number } */
+function resolveRealFromMeta(meta, anyJid) {
+  const out = { realJid: null, lidJid: null, number: null };
+  const raw  = Array.isArray(meta?.participants) ? meta.participants : [];
+  const norm = lidParser(raw);
+
+  if (typeof anyJid === "string" && anyJid.endsWith("@s.whatsapp.net")) {
+    out.realJid = anyJid;
+    // buscar su par @lid (si existe)
+    for (let i = 0; i < raw.length; i++) {
+      if (norm[i]?.id === out.realJid && typeof raw[i]?.id === "string" && raw[i].id.endsWith("@lid")) {
+        out.lidJid = raw[i].id;
+        break;
+      }
+    }
+  } else if (typeof anyJid === "string" && anyJid.endsWith("@lid")) {
+    out.lidJid = anyJid;
+    const idx = raw.findIndex(p => p?.id === anyJid);
+    if (idx >= 0) {
+      const w = raw[idx];
+      if (typeof w?.jid === "string" && w.jid.endsWith("@s.whatsapp.net")) out.realJid = w.jid;
+      else if (typeof norm[idx]?.id === "string" && norm[idx].id.endsWith("@s.whatsapp.net")) out.realJid = norm[idx].id;
+    }
+  }
+
+  out.number = DIGITS(out.realJid || "");
+  return out;
+}
+// ==== FIN HELPERS ====
 const handler = async (conn) => {
   conn.ev.on("group-participants.update", async (update) => {
     try {
@@ -201,25 +247,36 @@ if (update.action === "promote" && update.participants?.length) {
       
 // 🔒 FIN SISTEMA DE PROTECCIÓN Y AVISO DE CAMBIOS DE ADMIN 🔒
       for (const participant of update.participants) {
-        const phone = participant.split("@")[0];
-        const mention = `@${phone}`;
+        const { realJid, lidJid, number } = resolveRealFromMeta(metadata, participant);
+
+// para mencionar, usa el real si existe (mejor soporte en LID):
+const mentionId = realJid || participant;
+const phoneForMention = number || participant.split("@")[0];
+const mention = `@${phoneForMention}`;
 
         if (update.action === "add") {
-          if (antiArabe == 1 && arabes.some(p => phone.startsWith(p))) {
-            const info = metadata.participants.find(p => p.id === participant);
-            const isAdmin = info?.admin === "admin" || info?.admin === "superadmin";
-            const isOwner = global.isOwner && global.isOwner(participant);
-            if (!isAdmin && !isOwner) {
-              await conn.sendMessage(chatId, {
-                text: `🚫 ${mention} tiene un número prohibido y será eliminado.`,
-                mentions: [participant]
-              });
-              try {
-                await conn.groupParticipantsUpdate(chatId, [participant], "remove");
-              } catch {}
-              continue;
-            }
-          }
+  // ahora validamos con el NÚMERO REAL
+  const isArabic = (antiArabe == 1) && number && arabes.some(cc => number.startsWith(cc));
+
+  if (isArabic) {
+    const info = metadata.participants.find(p => p.id === participant);
+    const isAdmin = info?.admin === "admin" || info?.admin === "superadmin";
+    // para owner, mejor pasar número real si tu helper lo soporta
+    const isOwner = global.isOwner && (global.isOwner(number) || global.isOwner(mentionId));
+
+    if (!isAdmin && !isOwner) {
+      await conn.sendMessage(chatId, {
+        text: `🚫 ${mention} tiene un prefijo prohibido y será eliminado.`,
+        mentions: [mentionId]
+      });
+      try {
+        await conn.groupParticipantsUpdate(chatId, [participant], "remove");
+      } catch {}
+      continue; // no enviar bienvenida
+    }
+  }
+
+  // … (sigue tu bienvenida normal)
 
           if (welcomeActive != 1) continue;
 
@@ -240,7 +297,7 @@ if (update.action === "promote" && update.participants?.length) {
               caption: `👋 ${mention}
 
 ${bienvenidaPersonalizada}`,
-              mentions: [participant]
+              mentions: [mentionId]
             });
           } else {
             const mensaje = mensajesBienvenida[Math.floor(Math.random() * mensajesBienvenida.length)];
@@ -252,7 +309,7 @@ ${bienvenidaPersonalizada}`,
                 caption: `👋 ${mention}
 
 ${mensaje}`,
-                mentions: [participant]
+                mentions: [mentionId]
               });
             } else {
               const avatar = await loadImage(perfilURL);
