@@ -12,25 +12,25 @@ const handler = async (msg, { conn, args, command }) => {
   }
 
   try {
-    // Reacción inicial
+    
     if (msg?.key) await conn.sendMessage(chatId, { react: { text: "🎨", key: msg.key } });
     if (msg?.key) await conn.sendMessage(chatId, { react: { text: "🕕", key: msg.key } });
 
-    // Llamada a la API
-    const apiURL = `https://myapiadonix.vercel.app/api/veo3?prompt=${encodeURIComponent(text)}&apikey=adonixveo3`;
+    
+    const apiURL = `https://myapiadonix.vercel.app/ai/veo3?prompt=${encodeURIComponent(text)}`;
     const res = await fetch(apiURL);
     const json = await res.json();
 
     if (!json.success || !json.video_url) throw new Error(json.message || "No se pudo generar el video");
 
-    // Limpiar URL por si hay espacios
+    
     const videoUrl = json.video_url.trim();
 
-    // Descargar video
+
     const videoRes = await fetch(videoUrl);
     const buffer = await videoRes.arrayBuffer().then(ab => Buffer.from(ab));
 
-    // Enviar video
+    
     await conn.sendMessage(chatId, {
       video: buffer,
       caption: `
@@ -44,7 +44,7 @@ const handler = async (msg, { conn, args, command }) => {
       gifPlayback: false
     }, { quoted: msg.key ? msg : null });
 
-    // Reacción final
+    
     if (msg?.key) await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
 
   } catch (err) {
