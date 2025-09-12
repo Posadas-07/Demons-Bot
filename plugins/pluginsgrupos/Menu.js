@@ -32,115 +32,125 @@ const handler = async (msg, { conn }) => {
     console.error("[menu] Error leyendo setmenu.json:", e);
   }
 
-  const caption = `𖠺𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡𖠺
+  const caption = `DE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉
 
-𖠁𝙈𝙀𝙉𝙐 𝙂𝙀𝙉𝙀𝙍𝘼𝙇𖠁
-𖠁𝗣𝗿𝗲𝗳𝗶𝗷𝗼 𝗔𝗰𝘁𝘂𝗮𝗹: 『 ${pref} 』
-𖠁𝗨𝘀𝗮 𝗲𝗻 𝗰𝗮𝗱𝗮 𝗰𝗼𝗺𝗮𝗻𝗱𝗼
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Gᴇɴᴇʀᴀʟ༻꧂
+𒈒 Prefijo Actual: 『 ${pref} 』
+𒈒 Usa en cada comando
+┗━°⌜ 赤い糸 ⌟°━┛
 
-𖠁𝙄𝙉𝙁𝙊𝙍𝙈𝘼𝘾𝙄𝙊𝙉𖠁
-╭─────◆
-│๛ ${pref}ping
-│๛ ${pref}speedtest
-│๛ ${pref}creador
-│๛ ${pref}info
-╰─────◆
 
-𖠁𝙈𝙀𝙉𝙐𝙎 𝘿𝙄𝙎𝙋𝙊𝙉𝙄𝘽𝙇𝙀𝙎𖠁
-╭─────◆
-│๛ ${pref}menugrupo
-│๛ ${pref}menuaudio
-│๛ ${pref}menurpg
-│๛ ${pref}menuowner
-│๛ ${pref}menufree
-╰─────◆
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Iɴꜰᴏʀᴍᴀᴄɪᴏ́ɴ༻꧂
+𒈒 *${pref}ping*
+𒈒 *${pref}speedtest*
+𒈒 *${pref}creador*
+𒈒 *${pref}info*
+┗━°⌜ 赤い糸 ⌟°━┛
 
-𖠁PARA VENTAS 𖠁
-╭─────◆
-│๛ ${pref}setstock / stock
-│๛ ${pref}setnetflix / netflix
-│๛ ${pref}setpago / pago
-│๛ ${pref}setcombos / combos
-│๛ ${pref}setpeliculas / peliculas
-│๛ ${pref}settramites / tramites
-│๛ ${pref}setcanvas / canvas
-│๛ ${pref}setreglas / reglas
-│๛ ${pref}sorteo
-│๛ ${pref}setsoporte / soporte
-│๛ ${pref}setpromo / promo
-│๛ ${pref}addfactura
-│๛ ${pref}delfactura
-│๛ ${pref}facpaga
-│๛ ${pref}verfac
-╰─────◆
 
-𖠁𝙄𝘼 - 𝘾𝙃𝘼𝙏 𝘽𝙊𝙏𖠁
-╭─────◆
-│๛ ${pref}gemini
-│๛ ${pref}chatgpt
-│๛ ${pref}dalle
-│๛ ${pref}visión
-│๛ ${pref}visión2
-│๛ ${pref}chat on/off
-│๛ ${pref}luminai
-╰─────◆
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Mᴇɴᴜꜱ Dɪꜱᴘᴏɴɪʙʟᴇꜱ༻꧂
+𒈒 *${pref}menugrupo*
+𒈒 *${pref}menuaudio*
+𒈒 *${pref}menurpg*
+𒈒 *${pref}menuowner*
+𒈒 *${pref}menufree*
+┗━°⌜ 赤い糸 ⌟°━┛
 
-𖠁𝘿𝙀𝙎𝘾𝘼𝙍𝙂𝘼𖠁
-╭─────◆
-│๛ ${pref}play / play1 / play2 / play3
-│๛ ${pref}ytmp3 / ytmp4 / ytmp3doc / ytmp4doc
-│๛ ${pref}tiktok / fb / ig / spotify
-│๛ ${pref}kiss / topkiss
-│๛ ${pref}slap / topslap
-│๛ ${pref}mediafire / apk
-╰─────◆
 
-𖠁𝘽𝙐𝙎𝘾𝘼𝘿𝙊𝙍𝙀𝙎𖠁
-╭─────◆
-│๛ ${pref}pixai
-│๛ ${pref}tiktoksearch
-│๛ ${pref}yts
-│๛ ${pref}tiktokstalk
-╰─────◆
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Pᴀʀᴀ Vᴇɴᴛᴀꜱ༻꧂
+𒈒 *${pref}setstock / stock*
+𒈒 *${pref}setnetflix / netflix*
+𒈒 *${pref}setpago / pago*
+𒈒 *${pref}setcombos / combos*
+𒈒 *${pref}setpeliculas / peliculas*
+𒈒 *${pref}settramites / tramites*
+𒈒 *${pref}setcanvas / canvas*
+𒈒 *${pref}setreglas / reglas*
+𒈒 *${pref}sorteo*
+𒈒 *${pref}setsoporte / soporte*
+𒈒 *${pref}setpromo / promo*
+𒈒 *${pref}addfactura*
+𒈒 *${pref}delfactura*
+𒈒 *${pref}facpaga*
+𒈒 *${pref}verfac*
+┗━°⌜ 赤い糸 ⌟°━┛
 
-𖠁𝘾𝙊𝙉𝙑𝙀𝙍𝙏𝙄𝘿𝙊𝙍𝙀𝙎𖠁
-╭─────◆
-│๛ ${pref}tomp3
-│๛ ${pref}toaudio
-│๛ ${pref}hd
-│๛ ${pref}tts
-│๛ ${pref}tovideo / toimg
-│๛ ${pref}gifvideo / ff / ff2
-╰─────◆
 
-𖠁𝙎𝙏𝙄𝘾𝙆𝙀𝙍𝙎𖠁
-╭─────◆
-│๛ ${pref}s / qc / qc2 / texto
-│๛ ${pref}mixemoji / aniemoji
-│๛ ${pref}addco / delco
-╰─────◆
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺IA - CʜᴀᴛBᴏᴛ༻꧂
+𒈒 *${pref}gemini*
+𒈒 *${pref}chatgpt*
+𒈒 *${pref}dalle*
+𒈒 *${pref}visión*
+𒈒 *${pref}visión2*
+𒈒 *${pref}chat on/off*
+𒈒 *${pref}luminai*
+┗━°⌜ 赤い糸 ⌟°━┛
 
-𖠁𝙃𝙀𝙍𝙍𝘼𝙈𝙄𝙀𝙉𝙏𝘼𝙎𖠁
-╭─────◆
-│๛ ${pref}ver / perfil / get / xxx
-│๛ ${pref}tourl / whatmusic
-╰─────◆
 
-𖠁𝙈𝙄𝙉𝙄 𝙅𝙐𝙀𝙂𝙊𝙎𖠁 
-╭─────◆
-│๛ ${pref}verdad / reto
-│๛ ${pref}personalidad
-│๛ ${pref}parejas / ship
-│๛ ${pref}kiss / topkiss
-│๛ ${pref}slap / topslap
-│๛ ${pref}menurpg
-╰─────◆
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Dᴇꜱᴄᴀʀɢᴀ༻꧂
+𒈒 *${pref}play / play1 / play2 / play3*
+𒈒 *${pref}ytmp3 / ytmp4 / ytmp3doc / ytmp4doc*
+𒈒 *${pref}tiktok / fb / ig / spotify*
+𒈒 *${pref}kiss / topkiss*
+𒈒 *${pref}slap / topslap*
+𒈒 *${pref}mediafire / apk*
+┗━°⌜ 赤い糸 ⌟°━┛
 
-✨ Gracias por usar *La Suki Bot*. Eres adorable 💖
+
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Bᴜꜱᴄᴀᴅᴏʀᴇꜱ༻꧂
+𒈒 *${pref}pixai*
+𒈒 *${pref}tiktoksearch*
+𒈒 *${pref}yts*
+𒈒 *${pref}tiktokstalk*
+┗━°⌜ 赤い糸 ⌟°━┛
+
+
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Cᴏɴᴠᴇʀᴛɪᴅᴏʀᴇꜱ༻꧂
+𒈒 *${pref}tomp3*
+𒈒 *${pref}toaudio*
+𒈒 *${pref}hd*
+𒈒 *${pref}tts*
+𒈒 *${pref}tovideo / toimg*
+𒈒 *${pref}gifvideo / ff / ff2*
+┗━°⌜ 赤い糸 ⌟°━┛
+
+
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Sᴛɪᴄᴋᴇʀꜱ༻꧂
+𒈒 *${pref}s / qc / qc2 / texto*
+𒈒 *${pref}mixemoji / aniemoji*
+𒈒 *${pref}addco / delco*
+┗━°⌜ 赤い糸 ⌟°━┛
+
+
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Hᴇʀʀᴀᴍɪᴇɴᴛᴀꜱ༻꧂
+𒈒 *${pref}ver / perfil / get / xxx*
+𒈒 *${pref}tourl / whatmusic*
+┗━°⌜ 赤い糸 ⌟°━┛
+
+
+┏━°⌜ 赤い糸 ⌟°━┓
+꧁༺Mɪɴɪ Jᴜᴇɢᴏꜱ༻꧂ 
+𒈒 *${pref}verdad / reto*
+𒈒 *${pref}personalidad*
+𒈒 *${pref}parejas / ship*
+𒈒 *${pref}kiss / topkiss*
+𒈒 *${pref}slap / topslap*
+𒈒 *${pref}menurpg*
+┗━°⌜ 赤い糸 ⌟°━┛
 `.trim();
 
   await conn.sendMessage2(chatId, {
-    video: { url: "https://cdn.russellxz.click/a289f34c.mp4" },
+    image: { url: "https://cdn.russellxz.click/978d6be2.jpeg" },
     gifPlayback: true,
     caption
   }, msg);
