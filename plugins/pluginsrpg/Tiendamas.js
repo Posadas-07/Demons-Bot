@@ -43,7 +43,7 @@ const handler = async (msg, { conn }) => {
   });
 
   await conn.sendMessage(chatId, {
-    image: { url: "https://cdn.russellxz.click/2861878d.jpeg" },
+    image: { url: "https://cdn.russellxz.click/94c1678e.jpeg" },
     caption: texto
   }, { quoted: msg });
 
