@@ -28,7 +28,7 @@ const handler = async (msg, { conn, args, command }) => {
       }, { quoted: msg });
     }
 
-    const caption = `🎬 *𝑪𝒐𝒏𝒕𝒆𝒏𝒊𝒅𝒐 IG 𝒅𝒆𝒔𝒄𝒂𝒓𝒈𝒂𝒅𝒐*\n𖠁 *API:* api.dorratz.com\n────────────\n🤖 _La Suki Bot_`;
+    const caption = `🎬 *𝑪𝒐𝒏𝒕𝒆𝒏𝒊𝒅𝒐 IG 𝒅𝒆𝒔𝒄𝒂𝒓𝒈𝒂𝒅𝒐*\nDE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉`;
 
     const tmpDir = path.resolve("./tmp");
     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
