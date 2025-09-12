@@ -40,7 +40,7 @@ const handler = async (msg, { conn, args, command }) => {
       `𖠁 *Nombre:* ${fileInfo.title}\n` +
       `𖠁 *Tamaño:* ${fileInfo.size}\n` +
       `𖠁 *Tipo:* ${fileInfo.mime}\n` +
-      `𖠁 *Extensión:* ${fileInfo.extension}\n\n────────────\n𖠁 _La Suki Bot_`;
+      `𖠁 *Extensión:* ${fileInfo.extension}\n\nDE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉`;
 
     await conn.sendMessage(chatId, {
       text: caption
