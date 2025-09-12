@@ -88,7 +88,7 @@ const handler = async (msg, { conn, args }) => {
 
     // 🔥 Aquí enviamos el video como GIF automático
     await conn.sendMessage(chatId, {
-      video: { url: "https://cdn.russellxz.click/b82c0860.mp4" },
+      video: { url: "https://cdn.russellxz.click/6574d078.mp4" },
       gifPlayback: true, // ✅ se reproduce en bucle tipo GIF
       caption: finalMsg,
       mentions: mentionIds
