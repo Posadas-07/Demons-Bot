@@ -16,13 +16,13 @@ const handler = async (msg, { conn }) => {
   const paquetes = Object.entries(guarData);
   const total = paquetes.length;
 
-  const caption = `𖠺𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡𖠺
+  const caption = `DE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉
 
 𖠁🗂️ 𝙋𝘼𝙌𝙐𝙀𝙏𝙀𝙎 𝘿𝙀 𝙈𝙐𝙇𝙏𝙄𝙈𝙀𝘿𝙄𝘼𖠁
 🎧 Audios, 🎞️ videos, 🖼️ imágenes, 🧩 stickers y más...
 
 📝 *¿Cómo funciona?*
-Solo escribe el *nombre del paquete* en el chat y *La Suki Bot* enviará al azar uno de los archivos guardados dentro de ese paquete.
+Solo escribe el *nombre del paquete* en el chat y *Demons-Bot* enviará al azar uno de los archivos guardados dentro de ese paquete.
 
 📥 Para *guardar multimedia* responde a cualquier imagen, audio, sticker o video con:
 ➤ *.guar nombreDelPaquete*
@@ -51,7 +51,7 @@ ${
 `.trim();
 
   await conn.sendMessage2(chatId, {
-    video: { url: 'https://cdn.russellxz.click/18bf4be2.mp4' },
+    image: { url: 'https://cdn.russellxz.click/94c1678e.jpeg' },
     gifPlayback: true,
     caption
   }, msg);
