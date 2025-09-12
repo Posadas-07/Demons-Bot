@@ -83,15 +83,20 @@ const handler = async (msg, { conn, args }) => {
         finalMsg += `│ 💬 *Mensaje:* ${extraMsg}\n`;
     }
         finalMsg += `╰──────────────╯\n\n`;
-        finalMsg += `🔱 *Invocando a toda la Legión...*\n\n`;
+        finalMsg += `📢 *Etiquetando a todos los miembros...*\n\n`;
         finalMsg += mentionList;
 
+    // 🔥 Aquí enviamos el video como GIF automático
     await conn.sendMessage(chatId, {
-  video: { url: "https://cdn.russellxz.click/b82c0860.mp4" },
-  gifPlayback: true, // 🔥 hace que el video se reproduzca como GIF
-  caption: finalMsg,
-  mentions: mentionIds
-}, { quoted: msg });
+      video: { url: "https://cdn.russellxz.click/b82c0860.mp4" },
+      gifPlayback: true, // ✅ se reproduce en bucle tipo GIF
+      caption: finalMsg,
+      mentions: mentionIds
+    }, { quoted: msg });
+
+  } catch (err) {
+    console.error("❌ Error en el comando tagall:", err);
+    await conn.sendMessage(msg.key.remoteJid, { text: "❌ Ocurrió un error al ejecutar el comando tagall." }, { quoted: msg });
   }
 };
 
