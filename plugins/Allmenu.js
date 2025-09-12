@@ -18,19 +18,15 @@ const handler = async (msg, { conn }) => {
 
   const total = todosLosComandos.length;
 
-  const caption = `
-╔════════════════════╗
-║🤖 *ALL MENU LA SUKI BOT*
-╚════════════════════╝
+  const caption = ` DE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉
 
-🧠 *Bot creado desde cero.*
 🔧 *Total comandos activos:* ${total}
 🔑 *Prefijo actual:* ${prefijo}
 
 📦 *Lista de comandos:*
 ${todosLosComandos.map(c => `➤ ${prefijo}${c}`).join("\n")}
   
-💫 *Gracias por usar suki Omega.*
+💫 *Demons-Bot WhatsApp*
 `.trim();
 
   return conn.sendMessage2(chatId, {
