@@ -70,12 +70,10 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}delmenugrupo 
 │๛ ${pref}delmenuowner
 ╰─────◆
-
-🤖 *La Suki Bot - Modo Dios activado*
 `.trim();
 
   await conn.sendMessage2(chatId, {
-    video: { url: "https://cdn.russellxz.click/a0b60c86.mp4" },
+    image: { url: "https://cdn.russellxz.click/94c1678e.jpeg" },
     gifPlayback: true,
     caption
   }, msg);
