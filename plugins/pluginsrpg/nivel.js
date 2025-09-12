@@ -31,7 +31,7 @@ const handler = async (msg, { conn }) => {
   }
 
   // Obtener avatar del usuario o usar uno por defecto
-  let avatarURL = "https://cdn.russellxz.click/c1954949.jpeg";
+  let avatarURL = "https://cdn.russellxz.click/94c1678e.jpeg";
   try {
     const pp = await conn.profilePictureUrl(`${target}@s.whatsapp.net`, "image");
     if (pp) avatarURL = pp;
