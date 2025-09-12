@@ -71,7 +71,7 @@ const handler = async (msg, { conn }) => {
   texto += `➤ .batallamascota\n`;
   texto += `➤ .mascota (para cambiar de mascota principal)\n`;
 
-  const portada = "https://cdn.russellxz.click/25e8051c.jpeg";
+  const portada = "https://cdn.russellxz.click/94c1678e.jpeg";
 
   await conn.sendMessage(
     chatId,
