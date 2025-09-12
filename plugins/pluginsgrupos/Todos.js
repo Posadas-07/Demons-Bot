@@ -76,9 +76,9 @@ const handler = async (msg, { conn, args }) => {
     const mentionList = mentionIds.map(id => `➤ @${id.split("@")[0]}`).join("\n");
     const extraMsg = (args || []).join(" ");
 
-    let finalMsg  = `╭─⌈ 🔊 𝐓𝐀𝐆𝐀𝐋𝐋 𝐌𝐎𝐃𝐄 ⌋──╮\n`;
-        finalMsg += `│ 🤖 *✧DE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉ ✧*\n`;
-        finalMsg += `│ 👤 *Invocador:* @${senderDigits}\n`;
+    let finalMsg  = `╭─⌈ *✨Invocación Divina✨* ⌋──╮\n`;
+        finalMsg += `│ 🐉 *✧DE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉*\n`;
+        finalMsg += `│ ☠️ *✧ Invocados por el Rey Divino✧:* @${senderDigits}\n`;
     if (extraMsg.length > 0) {
         finalMsg += `│ 💬 *Mensaje:* ${extraMsg}\n`;
     }
