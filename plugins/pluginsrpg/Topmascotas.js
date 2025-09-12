@@ -51,7 +51,7 @@ const handler = async (msg, { conn }) => {
   });
 
   await conn.sendMessage(chatId, {
-    image: { url: "https://cdn.russellxz.click/1745315f.jpeg" },
+    image: { url: "https://cdn.russellxz.click/94c1678e.jpeg" },
     caption: texto,
     mentions: ranking.map(u => `${u.numero}@s.whatsapp.net`),
     quoted: msg
