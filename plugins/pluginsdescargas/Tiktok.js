@@ -60,7 +60,7 @@ const handler = async (msg, { conn, args, command }) => {
       }, { quoted: msg });
     }
 
-    const caption = `🎵 *𝑽𝒊𝒅𝒆𝒐 𝒅𝒆 𝑻𝒊𝒌𝑻𝒐𝒌 𝑫𝒆𝒔𝒄𝒂𝒓𝒈𝒂𝒅𝒐* 🎵\n\n𖠁 *Título:* ${videoTitle}\n𖠁 *Autor:* ${videoAuthor}\n𖠁 *Duración:* ${videoDuration}\n𖠁 *Likes:* ${videoLikes}\n𖠁 *Comentarios:*\n${videoComments}\n𖠁 *API:* api.dorratz.com\n────────────\n🤖 _La Suki Bot_`;
+    const caption = `🎵 *𝑽𝒊𝒅𝒆𝒐 𝒅𝒆 𝑻𝒊𝒌𝑻𝒐𝒌 𝑫𝒆𝒔𝒄𝒂𝒓𝒈𝒂𝒅𝒐* 🎵\n\n𖠁 *Título:* ${videoTitle}\n𖠁 *Autor:* ${videoAuthor}\n𖠁 *Duración:* ${videoDuration}\n𖠁 *Likes:* ${videoLikes}\n𖠁 *Comentarios:*\n${videoComments}\nDE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉`;
 
     await conn.sendMessage(chatId, {
       video: fs.readFileSync(filePath),
