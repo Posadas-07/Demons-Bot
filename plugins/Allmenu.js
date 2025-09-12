@@ -30,7 +30,7 @@ ${todosLosComandos.map(c => `➤ ${prefijo}${c}`).join("\n")}
 `.trim();
 
   return conn.sendMessage2(chatId, {
-    image: { url: "https://cdn.russellxz.click/40df9bcb.jpeg" },
+    image: { url: "https://cdn.russellxz.click/94c1678e.jpeg" },
     caption
   }, msg);
 };
