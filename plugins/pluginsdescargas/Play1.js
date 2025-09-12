@@ -70,7 +70,7 @@ const handler = async (msg, { conn, text }) => {
       contextInfo: {
         externalAdReply: {
           title: title,
-          body: "🎶 Reproducido por La Suki Bot",
+          body: "🎶 Reproducido por La Demons-Bot",
           mediaType: 1,
           previewType: "PHOTO",
           thumbnailUrl: thumbnail,
