@@ -20,7 +20,7 @@ if (info?.cerrar && ahora >= info.cerrar) {
   delete data[chatId].cerrar;
 
   await conn.sendMessage(chatId, {
-    video: { url: "https://cdn.russellxz.click/1f9e8232.mp4" },
+    image: { url: "https://cdn.russellxz.click/a751c396.jpeg" },
     caption: "🔒 El grupo ha sido cerrado automáticamente."
   });
 }
@@ -31,7 +31,7 @@ if (info?.abrir && ahora >= info.abrir) {
   delete data[chatId].abrir;
 
   await conn.sendMessage(chatId, {
-    video: { url: "https://cdn.russellxz.click/b5635057.mp4" },
+    image: { url: "https://cdn.russellxz.click/a751c396.jpeg" },
     caption: "🔓 El grupo ha sido abierto automáticamente."
   });
 }
