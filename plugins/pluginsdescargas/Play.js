@@ -57,7 +57,7 @@ module.exports = async (msg, { conn, text }) => {
 ☛ 📄 Audio Doc     (4 / audiodoc)
 ☛ 📁 Video Doc     (3 / videodoc)
  
-❦𝑳𝑨 𝑺𝑼𝑲𝑰 𝑩𝑶𝑻❦
+DE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉
 `.trim();
 
   // envía preview
