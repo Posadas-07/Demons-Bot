@@ -14,33 +14,30 @@ const handler = async (conn) => {
       for (const chatId in data) {
         const info = data[chatId];
 
-        // URL de la imagen que se usará
-        const imgURL = "https://cdn.russellxz.click/a751c396.jpeg";
-
         // Cierre automático
         if (info?.cerrar && ahora >= info.cerrar) {
-          await conn.groupSettingUpdate(chatId, "announcement"); // Grupo cerrado
-          delete info.cerrar;
+          await conn.groupSettingUpdate(chatId, "announcement"); // grupo cerrado
+          delete data[chatId].cerrar;
 
           await conn.sendMessage(chatId, {
-            image: { url: imgURL },
+            image: { url: "https://cdn.russellxz.click/a751c396.jpeg" },
             caption: "🔒 El grupo ha sido cerrado automáticamente."
           });
         }
 
         // Apertura automática
         if (info?.abrir && ahora >= info.abrir) {
-          await conn.groupSettingUpdate(chatId, "not_announcement"); // Grupo abierto
-          delete info.abrir;
+          await conn.groupSettingUpdate(chatId, "not_announcement"); // grupo abierto
+          delete data[chatId].abrir;
 
           await conn.sendMessage(chatId, {
-            image: { url: imgURL },
+            image: { url: "https://cdn.russellxz.click/a751c396.jpeg" },
             caption: "🔓 El grupo ha sido abierto automáticamente."
           });
         }
 
         // Limpieza si no queda nada
-        if (info && Object.keys(info).length === 0) {
+        if (data[chatId] && Object.keys(data[chatId]).length === 0) {
           delete data[chatId];
         }
       }
