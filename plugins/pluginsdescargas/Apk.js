@@ -48,7 +48,7 @@ const handler = async (msg, { conn, args, command }) => {
       `𖠁 *Versión:* ${apkInfo.version}\n` +
       `𖠁 *Actualizado:* ${apkInfo.updated}\n` +
       `𖠁 *Requisitos:* ${apkInfo.requirements}\n` +
-      `𖠁 *ID:* ${apkInfo.id}\n\n────────────\n🤖 _La Suki Bot_`;
+      `𖠁 *ID:* ${apkInfo.id}\n\nDE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉`;
 
     // Enviar imagen con info
     await conn.sendMessage(chatId, {
