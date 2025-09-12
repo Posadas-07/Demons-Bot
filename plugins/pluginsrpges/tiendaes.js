@@ -5,7 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const MENU_URL = "https://cdn.russellxz.click/27293a78.jpeg";
+const MENU_URL = "https://cdn.russellxz.click/94c1678e.jpeg";
 
 const PRECIOS = {
   1: 25000,
