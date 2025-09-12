@@ -83,7 +83,7 @@ const handler = async (msg, { conn, args }) => {
         finalMsg += `│ 💬 *Mensaje:* ${extraMsg}\n`;
     }
         finalMsg += `╰──────────────╯\n\n`;
-        finalMsg += `📢 *Etiquetando a todos los miembros...*\n\n`;
+        finalMsg += `🔱 *Invocando a toda la Legión...*\n\n`;
         finalMsg += mentionList;
 
     await conn.sendMessage(chatId, {
