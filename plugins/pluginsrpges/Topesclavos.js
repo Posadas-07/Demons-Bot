@@ -5,7 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const PORTADA_URL = "https://cdn.russellxz.click/42bd53d7.jpeg";
+const PORTADA_URL = "https://cdn.russellxz.click/94c1678e.jpeg";
 const MAX_ITEMS = 10; // muestra top 10
 
 function cargarDB(p) {
