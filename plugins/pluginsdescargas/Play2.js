@@ -39,9 +39,7 @@ module.exports = async (msg, { conn, text }) => {
   const { url: videoUrl, title, timestamp: duration, views, author } = video;
   const viewsFmt = views.toLocaleString();
 
-  const caption = `
-
-❦𝑳𝑨 𝑺𝑼𝑲𝑰 𝑩𝑶𝑻❦
+  const caption = `DE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉
 
 📀𝙸𝚗𝚏𝚘 𝚍𝚎𝚕 𝚟𝚒𝚍𝚎𝚘:
 
