@@ -46,7 +46,7 @@ const handler = async (msg, { conn }) => {
   const caption = `╔════════════════╗
      💠 𝙱𝙸𝙴𝙽𝚅𝙴𝙽𝙸𝙳𝙾 💠
 ╚════════════════╝
-*𝐴𝑙 𝑚𝑒𝑛𝑢 𝑑𝑒 𝑔𝑟𝑢𝑝𝑜 𝑑𝑒 𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡*
+*𝐴𝑙 𝑚𝑒𝑛𝑢 𝑑𝑒 𝑔𝑟𝑢𝑝𝑜 𝑑𝑒 𝐿𝑎 DE҈M҉O҉N҉S҉ NO҉V҉A҉ CR҉O҉N҉H҉O҉S҉*
 
 🛠️ *CONFIGURACIONES*
 ╭─────◆
@@ -96,14 +96,12 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}abrirgrupo
 │๛ ${pref}cerrargrupo
 ╰─────◆
-
-🤖 *La Suki Bot - Panel de control grupal*
 `.trim();
 
   await conn.sendMessage2(
     chatId,
     {
-      video: { url: "https://cdn.russellxz.click/29906d1e.mp4" },
+      image: { url: "https://cdn.russellxz.click/94c1678e.jpeg" },
       gifPlayback: true,
       caption
     },
