@@ -87,14 +87,11 @@ const handler = async (msg, { conn, args }) => {
         finalMsg += mentionList;
 
     await conn.sendMessage(chatId, {
-      video: { url: "https://cdn.russellxz.click/b82c0860.mp4" },
-      caption: finalMsg,
-      mentions: mentionIds
-    }, { quoted: msg });
-
-  } catch (err) {
-    console.error("❌ Error en el comando tagall:", err);
-    await conn.sendMessage(msg.key.remoteJid, { text: "❌ Ocurrió un error al ejecutar el comando tagall." }, { quoted: msg });
+  video: { url: "https://cdn.russellxz.click/b82c0860.mp4" },
+  gifPlayback: true, // 🔥 hace que el video se reproduzca como GIF
+  caption: finalMsg,
+  mentions: mentionIds
+}, { quoted: msg });
   }
 };
 
