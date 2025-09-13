@@ -135,4 +135,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["enemigos"];
+handler.rpg = true;
 module.exports = handler;
