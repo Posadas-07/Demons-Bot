@@ -121,4 +121,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["miclan", "vermiclan"];
+handler.rpg = true;
 module.exports = handler;
