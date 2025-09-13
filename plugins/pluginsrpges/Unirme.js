@@ -99,4 +99,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["unirme"];
+handler.rpg = true;
 module.exports = handler;
