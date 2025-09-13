@@ -83,4 +83,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["quitarventa"];
+handler.rpg = true;
 module.exports = handler;
