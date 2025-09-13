@@ -1088,63 +1088,12 @@ try {
   console.error("❌ Error en lógica de muteo:", err);
 }
 // === FIN BLOQUEO DE MENSAJES DE USUARIOS MUTEADOS ===
-// index.js (parte donde manejas los mensajes)
-const fs = require("fs");
-const path = require("path");
+const { checkRpgGlobal } = require("./plugins/rpg-cooldown");
 
-const sukirpgPath = path.join(process.cwd(), "sukirpg.json");
-
-// Cargar o crear archivo
-let sukirpg = {};
-if (fs.existsSync(sukirpgPath)) {
-  sukirpg = JSON.parse(fs.readFileSync(sukirpgPath));
-} else {
-  fs.writeFileSync(sukirpgPath, JSON.stringify({}, null, 2));
-}
-
-const saveSukirpg = () => {
-  fs.writeFileSync(sukirpgPath, JSON.stringify(sukirpg, null, 2));
-};
-
-// Tiempo de cooldown (15 minutos)
-const COOLDOWN = 15 * 60 * 1000;
-
-// Hook global antes de ejecutar comandos
-async function checkRpgGlobal(msg, plugin, conn) {
-  // ⚡ Normalizar JID real del autor
-  const user = msg.key.participant || msg.key.remoteJid;
-  const chatId = msg.key.remoteJid;
-
-  // 🔍 Detectar si el comando es RPG
-  if (!plugin.rpg) return true; // si no es RPG, sigue normal
-
-  if (!sukirpg[user]) {
-    // ✅ Primera vez que usa un comando RPG
-    sukirpg[user] = { lastUse: Date.now(), usedOnce: true };
-    saveSukirpg();
-    return true;
-  }
-
-  const now = Date.now();
-  const last = sukirpg[user].lastUse || 0;
-  const usedOnce = sukirpg[user].usedOnce || false;
-
-  if (usedOnce && now - last < COOLDOWN) {
-    const remaining = COOLDOWN - (now - last);
-    const minutes = Math.floor(remaining / 60000);
-    const seconds = Math.floor((remaining % 60000) / 1000);
-    await conn.sendMessage(chatId, {
-      text: `⏳ Debes esperar *${minutes}m ${seconds}s* antes de usar otro comando RPG.`,
-    });
-    return false; // ❌ bloquear ejecución
-  }
-
-  // ✅ Actualizar última vez de uso
-  sukirpg[user].lastUse = now;
-  sukirpg[user].usedOnce = true;
-  saveSukirpg();
-
-  return true;
+// dentro del loop de ejecución de comandos
+if (plugin.rpg) {
+  const canRun = await checkRpgGlobal(m, plugin, sock);
+  if (!canRun) break; // bloquea si está en cooldown
 }
 // === INICIO BLOQUEO DE COMANDOS A USUARIOS BANEADOS ===
 try {
