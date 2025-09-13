@@ -146,6 +146,25 @@ const handler = async (msg, { conn }) => {
 𒈒 *${pref}kiss / topkiss*
 𒈒 *${pref}slap / topslap*
 𒈒 *${pref}menurpg*
+𒈒 *${pref}puta @usuario*
+𒈒 *${pref}puto @usuario*
+𒈒 *${pref}peruano @usuario*
+𒈒 *${pref}peruana @usuario*
+𒈒 *${pref}negro @usuario*
+𒈒 *${pref}negra @usuario*
+𒈒 *${pref}manca @usuario*
+𒈒 *${pref}manco @usuario*
+𒈒 *${pref}fea @usuario*
+𒈒 *${pref}feo @usuario*
+𒈒 *${pref}enano @usuario*
+𒈒 *${pref}enana @usuario*
+𒈒 *${pref}cachudo @usuario*
+𒈒 *${pref}cachuda @usuario*
+𒈒 *${pref}pajero @usuario*
+𒈒 *${pref}pajera @usuario*
+𒈒 *${pref}rata @usuario*
+𒈒 *${pref}adoptado @usuario*
+𒈒 *${pref}adoptada @usuario*
 ┗━°⌜ 赤い糸 ⌟°━┛
 `.trim();
 
