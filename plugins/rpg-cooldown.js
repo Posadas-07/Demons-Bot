@@ -19,31 +19,28 @@ const COOLDOWN = 15 * 60 * 1000; // 15 minutos
 async function checkRpgGlobal(msg, plugin, conn) {
   const user = msg.key.participant || msg.key.remoteJid;
   const chatId = msg.key.remoteJid;
+  const cmdName = plugin.command?.[0] || "desconocido"; // nombre del comando
 
   if (!plugin.rpg) return true;
 
-  if (!sukirpg[user]) {
-    sukirpg[user] = { lastUse: Date.now(), usedOnce: true };
-    saveSukirpg();
-    return true;
-  }
+  if (!sukirpg[user]) sukirpg[user] = {};
+  if (!sukirpg[user][cmdName]) sukirpg[user][cmdName] = { lastUse: 0 };
 
   const now = Date.now();
-  const last = sukirpg[user].lastUse || 0;
-  const usedOnce = sukirpg[user].usedOnce || false;
+  const last = sukirpg[user][cmdName].lastUse;
 
-  if (usedOnce && now - last < COOLDOWN) {
+  if (now - last < COOLDOWN) {
     const remaining = COOLDOWN - (now - last);
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
     await conn.sendMessage(chatId, {
-      text: `⏳ Debes esperar *${minutes}m ${seconds}s* antes de usar otro comando RPG.`,
+      text: `⏳ Debes esperar *${minutes}m ${seconds}s* antes de usar nuevamente el comando *${cmdName}*.`,
     });
     return false;
   }
 
-  sukirpg[user].lastUse = now;
-  sukirpg[user].usedOnce = true;
+  // ✅ Actualizar última vez de uso de este comando
+  sukirpg[user][cmdName].lastUse = now;
   saveSukirpg();
 
   return true;
