@@ -78,4 +78,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["pasarlider"];
+handler.rpg = true;
 module.exports = handler;
