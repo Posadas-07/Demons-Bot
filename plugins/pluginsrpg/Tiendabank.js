@@ -75,4 +75,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["tiendabank"];
+handler.rpg = true;
 module.exports = handler;
