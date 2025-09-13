@@ -53,4 +53,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["tiendaper"];
+handler.rpg = true;
 module.exports = handler;
