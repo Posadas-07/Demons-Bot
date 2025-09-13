@@ -1413,12 +1413,13 @@ for (const plugin of global.plugins) {
 
   try {
     if ((isClassic && plugin.command?.includes?.(command)) || (!isClassic && isCompatible)) {
-      // 🛑 Verificar si este comando usa sukirpg.json
+      // 🛑 si el comando está marcado como RPG, pasa por el cooldown
       if (plugin.rpg) {
         const canRun = await checkRpgGlobal(m, plugin, sock);
         if (!canRun) break; // si está en cooldown, no ejecuta
       }
 
+      // ✅ ejecutar comando normalmente
       if (isClassic) {
         await plugin(m, { conn: sock, text: rawArgs, args, command });
       } else {
