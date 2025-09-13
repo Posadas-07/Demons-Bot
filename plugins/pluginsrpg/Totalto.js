@@ -53,4 +53,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["totalto"];
+handler.rpg = true;
 module.exports = handler;
