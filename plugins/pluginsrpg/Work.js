@@ -180,4 +180,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["work"];
+handler.rpg = true;
 module.exports = handler;
