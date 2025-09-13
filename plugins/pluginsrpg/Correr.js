@@ -169,4 +169,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["correr"];
+handler.rpg = true;
 module.exports = handler;
