@@ -84,4 +84,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["deles", "eliminaresclavo"];
+handler.rpg = true;
 module.exports = handler;
