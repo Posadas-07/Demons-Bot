@@ -87,4 +87,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["vender"];
+handler.rpg = true;
 module.exports = handler;
