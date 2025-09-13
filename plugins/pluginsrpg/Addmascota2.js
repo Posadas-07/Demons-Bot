@@ -147,4 +147,5 @@ const handler = async (msg, { conn, args, command }) => {
 };
 
 handler.command = ["addmascota2", "addmas2"];
+handler.rpg = true;
 module.exports = handler;
