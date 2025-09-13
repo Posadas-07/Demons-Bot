@@ -43,4 +43,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["alaventa"];
+handler.rpg = true;
 module.exports = handler;
