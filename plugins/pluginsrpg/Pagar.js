@@ -174,4 +174,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["pagar"];
+handler.rpg = true;
 module.exports = handler;
