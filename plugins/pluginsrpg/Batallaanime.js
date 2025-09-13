@@ -120,4 +120,5 @@ ${habsOpp}
 };
 
 handler.command = ["batallaanime", "batallaani"];
+handler.rpg = true;
 module.exports = handler;
