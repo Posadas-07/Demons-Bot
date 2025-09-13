@@ -237,4 +237,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["robar"];
+handler.rpg = true;
 module.exports = handler;
