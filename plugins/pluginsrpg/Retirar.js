@@ -104,4 +104,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["retirar", "ret"];
+handler.rpg = true;
 module.exports = handler;
