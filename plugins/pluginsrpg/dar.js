@@ -79,4 +79,5 @@ const handler = async (msg, { conn, args, participants }) => {
 };
 
 handler.command = ["dar"];
+handler.rpg = true;
 module.exports = handler;
