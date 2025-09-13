@@ -168,4 +168,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["estudiar"];
+handler.rpg = true;
 module.exports = handler;
