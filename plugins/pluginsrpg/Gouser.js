@@ -243,4 +243,5 @@ const handler = async (msg, { conn, command }) => {
 };
 
 handler.command = ["gouser"];
+handler.rpg = true;
 module.exports = handler;
