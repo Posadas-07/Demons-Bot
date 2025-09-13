@@ -134,4 +134,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["volar"];
+handler.rpg = true;
 module.exports = handler;
