@@ -59,4 +59,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["topmascotas", "topmas"];
+handler.rpg = true;
 module.exports = handler;
