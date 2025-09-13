@@ -129,4 +129,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["presumir"];
+handler.rpg = true;
 module.exports = handler;
