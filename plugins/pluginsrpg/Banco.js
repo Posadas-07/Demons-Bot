@@ -128,4 +128,5 @@ Ej: .pagar 2000
 };
 
 handler.command = ["banco"];
+handler.rpg = true;
 module.exports = handler;
