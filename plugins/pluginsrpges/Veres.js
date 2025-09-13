@@ -111,4 +111,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["veres", "veresclavos"];
+handler.rpg = true;
 module.exports = handler;
