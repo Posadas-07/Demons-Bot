@@ -136,4 +136,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["mododios"];
+handler.rpg = true;
 module.exports = handler;
