@@ -1406,25 +1406,31 @@ if (isGroup) {
   const command = messageContent.slice(prefixUsed.length).trim().split(" ")[0].toLowerCase();
   const rawArgs = messageContent.trim().slice(prefixUsed.length + command.length).trim();
   const args = rawArgs.length ? rawArgs.split(/\s+/) : [];        
-  // 🔁 Ejecutar comando desde plugins
-  for (const plugin of global.plugins) {
-    const isClassic = typeof plugin === "function";
-    const isCompatible = plugin.command?.includes?.(command);
+// 🔁 Ejecutar comando desde plugins
+for (const plugin of global.plugins) {
+  const isClassic = typeof plugin === "function";
+  const isCompatible = plugin.command?.includes?.(command);
 
-    try {
-      if (isClassic && plugin.command?.includes?.(command)) {
-        await plugin(m, { conn: sock, text: rawArgs, args, command }); // ← CAMBIO aquí
-        break;
+  try {
+    if ((isClassic && plugin.command?.includes?.(command)) || (!isClassic && isCompatible)) {
+      // 🛑 Verificar si este comando usa sukirpg.json
+      if (plugin.rpg) {
+        const canRun = await checkRpgGlobal(m, plugin, sock);
+        if (!canRun) break; // si está en cooldown, no ejecuta
       }
 
-      if (!isClassic && isCompatible) {
+      if (isClassic) {
+        await plugin(m, { conn: sock, text: rawArgs, args, command });
+      } else {
         await plugin.run({ msg: m, conn: sock, args, command });
-        break;
       }
-    } catch (e) {
-      console.error(chalk.red(`❌ Error ejecutando ${command}:`), e);
+
+      break;
     }
+  } catch (e) {
+    console.error(chalk.red(`❌ Error ejecutando ${command}:`), e);
   }
+}
 });
 
 sock.ev.on("connection.update", async ({ connection }) => {
