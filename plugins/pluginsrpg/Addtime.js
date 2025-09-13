@@ -75,4 +75,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["addtime"];
+handler.rpg = true;
 module.exports = handler;
