@@ -173,4 +173,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["comprarbank"];
+handler.rpg = true;
 module.exports = handler;
