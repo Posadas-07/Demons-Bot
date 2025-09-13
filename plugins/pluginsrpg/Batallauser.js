@@ -100,4 +100,5 @@ const handler = async (msg, { conn, command }) => {
 };
 
 handler.command = ["batallauser"];
+handler.rpg = true;
 module.exports = handler;
