@@ -93,4 +93,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["addmascota"];
+handler.rpg = true;
 module.exports = handler;
