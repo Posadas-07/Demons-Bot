@@ -119,4 +119,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["supermascota", "supermas"];
+handler.rpg = true;
 module.exports = handler;
