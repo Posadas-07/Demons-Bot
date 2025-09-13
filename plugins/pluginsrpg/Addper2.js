@@ -124,4 +124,5 @@ const handler = async (msg, { conn, args, command }) => {
 };
 
 handler.command = ["addper2"];
+handler.rpg = true;
 module.exports = handler;
