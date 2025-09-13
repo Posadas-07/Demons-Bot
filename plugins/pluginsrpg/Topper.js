@@ -61,4 +61,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["topper"];
+handler.rpg = true;
 module.exports = handler;
