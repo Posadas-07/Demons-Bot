@@ -176,4 +176,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["picar"];
+handler.rpg = true;
 module.exports = handler;
