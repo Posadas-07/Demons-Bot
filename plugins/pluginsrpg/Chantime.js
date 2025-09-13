@@ -118,4 +118,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["chantime"];
+handler.rpg = true;
 module.exports = handler;
