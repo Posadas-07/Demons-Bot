@@ -131,4 +131,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["cocinar"];
+handler.rpg = true;
 module.exports = handler;
