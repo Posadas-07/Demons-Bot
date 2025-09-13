@@ -123,4 +123,5 @@ Si deseas cambiarlo de nuevo, repite *.darlider* con otro usuario.`,
 };
 
 handler.command = ["darlider"];
+handler.rpg = true;
 module.exports = handler;
