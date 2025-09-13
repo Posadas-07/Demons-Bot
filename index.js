@@ -1129,10 +1129,12 @@ async function checkRpgGlobal(msg, plugin, conn) {
   const last = sukirpg[user].lastUse || 0;
   const usedOnce = sukirpg[user].usedOnce || false;
 
-  if (usedOnce && (now - last < COOLDOWN)) {
-    const falta = Math.ceil((COOLDOWN - (now - last)) / 1000);
+  if (usedOnce && now - last < COOLDOWN) {
+    const remaining = COOLDOWN - (now - last);
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
     await conn.sendMessage(chatId, {
-      text: `⏳ Debes esperar *${falta} segundos* antes de usar otro comando RPG.`,
+      text: `⏳ Debes esperar *${minutes}m ${seconds}s* antes de usar otro comando RPG.`,
     });
     return false; // ❌ bloquear ejecución
   }
