@@ -82,4 +82,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["topuser"];
+handler.rpg = true;
 module.exports = handler;
