@@ -128,4 +128,5 @@ ${detalle}`,
 };
 
 handler.command = ["darnivel"];
+handler.rpg = true;
 module.exports = handler;
