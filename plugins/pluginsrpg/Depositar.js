@@ -106,4 +106,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["depositar", "dep"];
+handler.rpg = true;
 module.exports = handler;
