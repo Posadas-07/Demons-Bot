@@ -277,4 +277,5 @@ ${restante > 0 ? `👉 Aún puedes solicitar hasta *${restante}* créditos.` : "
 };
 
 handler.command = ["prestamo"];
+handler.rpg = true;
 module.exports = handler;
