@@ -46,4 +46,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["saldo", "bal"];
+handler.rpg = true;
 module.exports = handler;
