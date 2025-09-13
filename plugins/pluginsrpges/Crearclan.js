@@ -126,4 +126,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["crearclan"];
+handler.rpg = true;
 module.exports = handler;
