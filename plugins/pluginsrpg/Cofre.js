@@ -148,4 +148,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["cofre"];
+handler.rpg = true;
 module.exports = handler;
