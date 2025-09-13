@@ -132,4 +132,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["clansupremo"];
+handler.rpg = true;
 module.exports = handler;
