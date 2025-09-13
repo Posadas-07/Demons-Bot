@@ -137,4 +137,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["entrenar"];
+handler.rpg = true;
 module.exports = handler;
