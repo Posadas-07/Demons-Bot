@@ -246,4 +246,5 @@ const handler = async (msg, { conn, command }) => {
 };
 
 handler.command = ["gomascota", "gomas"];
+handler.rpg = true;
 module.exports = handler;
