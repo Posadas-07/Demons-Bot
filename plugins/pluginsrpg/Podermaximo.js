@@ -132,4 +132,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["podermaximo", "podermax"];
+handler.rpg = true;
 module.exports = handler;
