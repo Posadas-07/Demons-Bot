@@ -83,4 +83,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["vermascotas", "vermas"];
+handler.rpg = true;
 module.exports = handler;
