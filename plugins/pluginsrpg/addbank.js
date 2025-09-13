@@ -96,4 +96,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["addbank"];
+handler.rpg = true;
 module.exports = handler;
