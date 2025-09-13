@@ -180,4 +180,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["daragua"];
+handler.rpg = true;
 module.exports = handler;
