@@ -160,4 +160,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["transferir", "tran"];
+handler.rpg = true;
 module.exports = handler;
