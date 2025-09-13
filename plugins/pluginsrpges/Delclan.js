@@ -181,4 +181,5 @@ Esta acción es permanente y eliminará todos sus miembros del clan.
 };
 
 handler.command = ["delclan"];
+handler.rpg = true;
 module.exports = handler;
