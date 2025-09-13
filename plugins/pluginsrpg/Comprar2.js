@@ -101,4 +101,5 @@ const handler = async (msg, { conn, args }) => {
 };
 
 handler.command = ["comprar2"];
+handler.rpg = true;
 module.exports = handler;
