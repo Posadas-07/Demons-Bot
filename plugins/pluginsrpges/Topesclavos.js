@@ -105,4 +105,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["topesclavos", "topes"];
+handler.rpg = true;
 module.exports = handler;
