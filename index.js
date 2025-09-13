@@ -47,6 +47,7 @@ const figlet = require("figlet");
 const readline = require("readline");
 const pino = require("pino");
 const { setConfig, getConfig } = require("./db");
+const { checkRpgGlobal } = require("./plugins/rpg-cooldown");
 // 🌐 Prefijos personalizados desde prefijos.json o por defecto
 const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
 let defaultPrefixes = [".", "#"];
@@ -1088,13 +1089,7 @@ try {
   console.error("❌ Error en lógica de muteo:", err);
 }
 // === FIN BLOQUEO DE MENSAJES DE USUARIOS MUTEADOS ===
-const { checkRpgGlobal } = require("./plugins/rpg-cooldown");
 
-// dentro del loop de ejecución de comandos
-if (plugin.rpg) {
-  const canRun = await checkRpgGlobal(m, plugin, sock);
-  if (!canRun) break; // bloquea si está en cooldown
-}
 // === INICIO BLOQUEO DE COMANDOS A USUARIOS BANEADOS ===
 try {
   const fs = require("fs");
