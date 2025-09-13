@@ -1110,29 +1110,38 @@ const saveSukirpg = () => {
 const COOLDOWN = 15 * 60 * 1000;
 
 // Hook global antes de ejecutar comandos
-async function checkRpgGlobal(msg, command, conn) {
-  const user = msg.sender;
+async function checkRpgGlobal(msg, plugin, conn) {
+  // ⚡ Normalizar JID real del autor
+  const user = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.key.remoteJid;
 
-  // 🔍 Detectar si el comando es RPG (usa sukirpg.json)
-  // puedes marcar tus comandos RPG en el handler con handler.rpg = true
-  if (!command.rpg) return true; // si no es RPG, sigue normal
+  // 🔍 Detectar si el comando es RPG
+  if (!plugin.rpg) return true; // si no es RPG, sigue normal
 
-  if (!sukirpg[user]) sukirpg[user] = {};
+  if (!sukirpg[user]) {
+    // ✅ Primera vez que usa un comando RPG
+    sukirpg[user] = { lastUse: Date.now(), usedOnce: true };
+    saveSukirpg();
+    return true;
+  }
 
   const now = Date.now();
   const last = sukirpg[user].lastUse || 0;
+  const usedOnce = sukirpg[user].usedOnce || false;
 
-  if (now - last < COOLDOWN) {
+  if (usedOnce && (now - last < COOLDOWN)) {
     const falta = Math.ceil((COOLDOWN - (now - last)) / 1000);
-    await conn.sendMessage(msg.chat, {
+    await conn.sendMessage(chatId, {
       text: `⏳ Debes esperar *${falta} segundos* antes de usar otro comando RPG.`,
     });
     return false; // ❌ bloquear ejecución
   }
 
-  // ✅ registrar nuevo uso
+  // ✅ Actualizar última vez de uso
   sukirpg[user].lastUse = now;
+  sukirpg[user].usedOnce = true;
   saveSukirpg();
+
   return true;
 }
 // === INICIO BLOQUEO DE COMANDOS A USUARIOS BANEADOS ===
