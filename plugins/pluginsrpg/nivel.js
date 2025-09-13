@@ -69,4 +69,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["nivel"];
+handler.rpg = true;
 module.exports = handler;
