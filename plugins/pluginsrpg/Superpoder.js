@@ -140,4 +140,5 @@ const handler = async (msg, { conn }) => {
 };
 
 handler.command = ["superpoder"];
+handler.rpg = true;
 module.exports = handler;
