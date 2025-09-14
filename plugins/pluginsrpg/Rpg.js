@@ -1,28 +1,57 @@
 const fs = require("fs");
 const path = require("path");
 
-// Helper para obtener solo los dígitos del usuario
-function getNumero(id) {
-  return id.replace(/[^0-9]/g, "");
+// ===== Helper DIGITS =====
+const DIGITS = (s = "") => String(s).replace(/\D/g, "");
+
+// ===== Función para resolver número real =====
+async function resolveTarget(conn, chatId, anyJid) {
+  const number = DIGITS(anyJid);
+  let realJid = null;
+
+  try {
+    const meta = await conn.groupMetadata(chatId);
+    const raw  = Array.isArray(meta?.participants) ? meta.participants : [];
+
+    const lidParser = participants => {
+      return participants.map(v => ({
+        id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid) ? v.jid : v.id
+      }));
+    };
+    const norm = lidParser(raw);
+
+    if (anyJid.endsWith("@s.whatsapp.net")) realJid = anyJid;
+    else if (anyJid.endsWith("@lid")) {
+      const idx = raw.findIndex(p => p?.id === anyJid);
+      if (idx >= 0) realJid = raw[idx]?.jid || norm[idx]?.id;
+    }
+    if (!realJid && number) realJid = `${number}@s.whatsapp.net`;
+  } catch {
+    if (number) realJid = `${number}@s.whatsapp.net`;
+  }
+
+  return { realJid, number };
 }
 
-// Ruta absoluta de la base de datos
+// ===== RUTA DB RPG =====
 const sukirpgPath = path.resolve(__dirname, "../sukirpg.json");
 
-// Leer la base de datos desde disco
+// ===== Leer y guardar DB =====
 function leerDB() {
   if (!fs.existsSync(sukirpgPath)) return { usuarios: [], mascotas: [] };
   return JSON.parse(fs.readFileSync(sukirpgPath, "utf-8"));
 }
 
-// Guardar la base de datos en disco
 function guardarDB(db) {
   fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
 }
 
+// ===== Comando RPG =====
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.key.remoteJid;
-  const numero = getNumero(msg.key.participant || msg.key.remoteJid);
+
+  // Resolver número real y JID
+  const { realJid, number } = await resolveTarget(conn, chatId, msg.key.participant || msg.key.remoteJid);
 
   await conn.sendMessage(chatId, { react: { text: "📥", key: msg.key } });
 
@@ -34,15 +63,13 @@ const handler = async (msg, { conn, args }) => {
 
   const [nombre, apellido, edad, fechaNacimiento] = args;
 
-  // Leer DB siempre desde disco antes de cualquier operación
+  // Leer DB
   let db = leerDB();
-
-  // Inicializar arrays si no existen
   if (!db.usuarios) db.usuarios = [];
   if (!db.mascotas) db.mascotas = [];
 
   // Verificar si ya está registrado
-  if (db.usuarios.find(u => u.numero === numero)) {
+  if (db.usuarios.find(u => u.number === number)) {
     return conn.sendMessage(chatId, {
       text: "⚠️ Ya estás registrado en el RPG. Usa `.nivel` para ver tus datos.",
       quoted: msg
@@ -64,22 +91,18 @@ const handler = async (msg, { conn, args }) => {
   let { key } = await conn.sendMessage(chatId, { text: steps[0] }, { quoted: msg });
   for (let i = 1; i < steps.length; i++) {
     await new Promise(r => setTimeout(r, 1050));
-    await conn.sendMessage(chatId, {
-      text: steps[i],
-      edit: key
-    }, { quoted: msg });
+    await conn.sendMessage(chatId, { text: steps[i], edit: key }, { quoted: msg });
   }
 
   // Asignar habilidades
   const habilidadesDisponibles = [
-    "🔥 Fuego Interior", "⚡ Descarga Rápida", "🧊 Hielo Mental", "🌪️ Golpe de Viento",
-    "💥 Explosión Controlada", "🧠 Concentración", "🌀 Vórtice Arcano", "👊 Impacto Bestial"
+    "🔥 Fuego Interior","⚡ Descarga Rápida","🧊 Hielo Mental","🌪️ Golpe de Viento",
+    "💥 Explosión Controlada","🧠 Concentración","🌀 Vórtice Arcano","👊 Impacto Bestial"
   ];
   const habilidad1 = habilidadesDisponibles[Math.floor(Math.random() * habilidadesDisponibles.length)];
   let habilidad2;
-  do {
-    habilidad2 = habilidadesDisponibles[Math.floor(Math.random() * habilidadesDisponibles.length)];
-  } while (habilidad2 === habilidad1);
+  do { habilidad2 = habilidadesDisponibles[Math.floor(Math.random() * habilidadesDisponibles.length)]; } 
+  while (habilidad2 === habilidad1);
 
   // Mascota inicial
   let mascotasUsuario = [];
@@ -99,7 +122,8 @@ const handler = async (msg, { conn, args }) => {
 
   // Crear usuario
   const usuario = {
-    numero,
+    realJid,       // JID real de WhatsApp
+    number,        // número limpio
     nombre,
     apellido,
     edad,
@@ -115,7 +139,7 @@ const handler = async (msg, { conn, args }) => {
   };
 
   db.usuarios.push(usuario);
-  guardarDB(db); // Guardar inmediatamente después de registrar
+  guardarDB(db);
 
   // Texto final
   const texto = `🎉 *¡Bienvenido al RPG de La Suki Bot!*\n\n` +
@@ -135,14 +159,8 @@ const handler = async (msg, { conn, args }) => {
                 `- *.saldo* Para ver tu saldo disponible\n\n` +
                 `¡Empieza tu aventura ahora! 🚀`;
 
-  await conn.sendMessage(chatId, {
-    image: { url: "https://cdn.russellxz.click/3f6baa71.jpeg" },
-    caption: texto
-  }, { quoted: msg });
-
-  await conn.sendMessage(chatId, {
-    react: { text: "🎮", key: msg.key }
-  });
+  await conn.sendMessage(chatId, { image: { url: "https://cdn.russellxz.click/3f6baa71.jpeg" }, caption: texto }, { quoted: msg });
+  await conn.sendMessage(chatId, { react: { text: "🎮", key: msg.key } });
 };
 
 handler.command = ["rpg"];
