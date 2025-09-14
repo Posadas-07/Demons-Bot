@@ -1,82 +1,33 @@
 const fs = require("fs");
 const path = require("path");
 
-// ===== Helper DIGITS =====
-const DIGITS = (s = "") => String(s).replace(/\D/g, "");
-
-// ===== Función para resolver número real =====
-async function resolveTarget(conn, chatId, anyJid) {
-  const number = DIGITS(anyJid);
-  let realJid = null;
-
-  try {
-    const meta = await conn.groupMetadata(chatId);
-    const raw  = Array.isArray(meta?.participants) ? meta.participants : [];
-
-    const lidParser = participants => {
-      return participants.map(v => ({
-        id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid) ? v.jid : v.id
-      }));
-    };
-    const norm = lidParser(raw);
-
-    if (anyJid.endsWith("@s.whatsapp.net")) realJid = anyJid;
-    else if (anyJid.endsWith("@lid")) {
-      const idx = raw.findIndex(p => p?.id === anyJid);
-      if (idx >= 0) realJid = raw[idx]?.jid || norm[idx]?.id;
-    }
-    if (!realJid && number) realJid = `${number}@s.whatsapp.net`;
-  } catch {
-    if (number) realJid = `${number}@s.whatsapp.net`;
-  }
-
-  return { realJid, number };
-}
-
-// ===== RUTA DB RPG =====
-const sukirpgPath = path.resolve(__dirname, "../sukirpg.json");
-
-// ===== Leer y guardar DB =====
-function leerDB() {
-  if (!fs.existsSync(sukirpgPath)) return { usuarios: [], mascotas: [] };
-  return JSON.parse(fs.readFileSync(sukirpgPath, "utf-8"));
-}
-
-function guardarDB(db) {
-  fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
-}
-
-// ===== Comando RPG =====
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.key.remoteJid;
-
-  // Resolver número real y JID
-  const { realJid, number } = await resolveTarget(conn, chatId, msg.key.participant || msg.key.remoteJid);
+  const sender = msg.key.participant || msg.key.remoteJid;
+  const numero = sender.replace(/[^0-9]/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "📥", key: msg.key } });
 
   if (args.length < 4) {
     return conn.sendMessage(chatId, {
-      text: `✳️ *Uso correcto:*\n.rpg Nombre Apellido Edad FechaNacimiento\n\n📌 Ejemplo:\n.rpg Cholo xyz 17 09/09/1998`
+      text: `✳️ *Uso correcto:*\n.rpg Nombre Apellido Edad FechaNacimiento\n\n📌 Ejemplo:\n.rpg Makuto Russell 27 19/06/1998`
     }, { quoted: msg });
   }
 
   const [nombre, apellido, edad, fechaNacimiento] = args;
 
-  // Leer DB
-  let db = leerDB();
+  const sukirpgPath = path.join(process.cwd(), "sukirpg.json");
+  let db = fs.existsSync(sukirpgPath) ? JSON.parse(fs.readFileSync(sukirpgPath)) : {};
   if (!db.usuarios) db.usuarios = [];
   if (!db.mascotas) db.mascotas = [];
 
-  // Verificar si ya está registrado
-  if (db.usuarios.find(u => u.number === number)) {
+  if (db.usuarios.find(u => u.numero === numero)) {
     return conn.sendMessage(chatId, {
       text: "⚠️ Ya estás registrado en el RPG. Usa `.nivel` para ver tus datos.",
       quoted: msg
     });
   }
 
-  // Pasos de registro
   const steps = [
     "🧠 Procesando tu registro...",
     "🔍 Buscando tus habilidades...",
@@ -91,20 +42,24 @@ const handler = async (msg, { conn, args }) => {
   let { key } = await conn.sendMessage(chatId, { text: steps[0] }, { quoted: msg });
   for (let i = 1; i < steps.length; i++) {
     await new Promise(r => setTimeout(r, 1050));
-    await conn.sendMessage(chatId, { text: steps[i], edit: key }, { quoted: msg });
+    await conn.sendMessage(chatId, {
+      text: steps[i],
+      edit: key
+    }, { quoted: msg });
   }
 
-  // Asignar habilidades
   const habilidadesDisponibles = [
-    "🔥 Fuego Interior","⚡ Descarga Rápida","🧊 Hielo Mental","🌪️ Golpe de Viento",
-    "💥 Explosión Controlada","🧠 Concentración","🌀 Vórtice Arcano","👊 Impacto Bestial"
+    "🔥 Fuego Interior", "⚡ Descarga Rápida", "🧊 Hielo Mental", "🌪️ Golpe de Viento",
+    "💥 Explosión Controlada", "🧠 Concentración", "🌀 Vórtice Arcano", "👊 Impacto Bestial"
   ];
+
   const habilidad1 = habilidadesDisponibles[Math.floor(Math.random() * habilidadesDisponibles.length)];
   let habilidad2;
-  do { habilidad2 = habilidadesDisponibles[Math.floor(Math.random() * habilidadesDisponibles.length)]; } 
-  while (habilidad2 === habilidad1);
+  do {
+    habilidad2 = habilidadesDisponibles[Math.floor(Math.random() * habilidadesDisponibles.length)];
+  } while (habilidad2 === habilidad1);
 
-  // Mascota inicial
+  // Elegir mascota aleatoria si hay disponibles
   let mascotasUsuario = [];
   let mascotaNombre = "❌ No hay mascotas en la tienda para asignar.";
   if (db.mascotas.length > 0) {
@@ -120,10 +75,8 @@ const handler = async (msg, { conn, args }) => {
     mascotaNombre = `🐾 *Mascota inicial:* ${mascotaFormateada.nombre}`;
   }
 
-  // Crear usuario
   const usuario = {
-    realJid,       // JID real de WhatsApp
-    number,        // número limpio
+    numero,
     nombre,
     apellido,
     edad,
@@ -139,9 +92,8 @@ const handler = async (msg, { conn, args }) => {
   };
 
   db.usuarios.push(usuario);
-  guardarDB(db);
+  fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
 
-  // Texto final
   const texto = `🎉 *¡Bienvenido al RPG de La Suki Bot!*\n\n` +
                 `👤 *Nombre:* ${nombre} ${apellido}\n` +
                 `📅 *Edad:* ${edad} años\n` +
@@ -159,8 +111,14 @@ const handler = async (msg, { conn, args }) => {
                 `- *.saldo* Para ver tu saldo disponible\n\n` +
                 `¡Empieza tu aventura ahora! 🚀`;
 
-  await conn.sendMessage(chatId, { image: { url: "https://cdn.russellxz.click/3f6baa71.jpeg" }, caption: texto }, { quoted: msg });
-  await conn.sendMessage(chatId, { react: { text: "🎮", key: msg.key } });
+  await conn.sendMessage(chatId, {
+    image: { url: "https://cdn.russellxz.click/3f6baa71.jpeg" },
+    caption: texto
+  }, { quoted: msg });
+
+  await conn.sendMessage(chatId, {
+    react: { text: "🎮", key: msg.key }
+  });
 };
 
 handler.command = ["rpg"];
