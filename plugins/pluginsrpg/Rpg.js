@@ -1,10 +1,28 @@
 const fs = require("fs");
 const path = require("path");
 
+// Helper para obtener solo los dígitos del usuario
+function getNumero(id) {
+  return id.replace(/[^0-9]/g, "");
+}
+
+// Ruta absoluta de la base de datos
+const sukirpgPath = path.resolve(__dirname, "../sukirpg.json");
+
+// Leer la base de datos desde disco
+function leerDB() {
+  if (!fs.existsSync(sukirpgPath)) return { usuarios: [], mascotas: [] };
+  return JSON.parse(fs.readFileSync(sukirpgPath, "utf-8"));
+}
+
+// Guardar la base de datos en disco
+function guardarDB(db) {
+  fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
+}
+
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
-  const numero = sender.replace(/[^0-9]/g, "");
+  const numero = getNumero(msg.key.participant || msg.key.remoteJid);
 
   await conn.sendMessage(chatId, { react: { text: "📥", key: msg.key } });
 
@@ -16,11 +34,14 @@ const handler = async (msg, { conn, args }) => {
 
   const [nombre, apellido, edad, fechaNacimiento] = args;
 
-  const sukirpgPath = path.join(process.cwd(), "sukirpg.json");
-  let db = fs.existsSync(sukirpgPath) ? JSON.parse(fs.readFileSync(sukirpgPath)) : {};
+  // Leer DB siempre desde disco antes de cualquier operación
+  let db = leerDB();
+
+  // Inicializar arrays si no existen
   if (!db.usuarios) db.usuarios = [];
   if (!db.mascotas) db.mascotas = [];
 
+  // Verificar si ya está registrado
   if (db.usuarios.find(u => u.numero === numero)) {
     return conn.sendMessage(chatId, {
       text: "⚠️ Ya estás registrado en el RPG. Usa `.nivel` para ver tus datos.",
@@ -28,6 +49,7 @@ const handler = async (msg, { conn, args }) => {
     });
   }
 
+  // Pasos de registro
   const steps = [
     "🧠 Procesando tu registro...",
     "🔍 Buscando tus habilidades...",
@@ -48,18 +70,18 @@ const handler = async (msg, { conn, args }) => {
     }, { quoted: msg });
   }
 
+  // Asignar habilidades
   const habilidadesDisponibles = [
     "🔥 Fuego Interior", "⚡ Descarga Rápida", "🧊 Hielo Mental", "🌪️ Golpe de Viento",
     "💥 Explosión Controlada", "🧠 Concentración", "🌀 Vórtice Arcano", "👊 Impacto Bestial"
   ];
-
   const habilidad1 = habilidadesDisponibles[Math.floor(Math.random() * habilidadesDisponibles.length)];
   let habilidad2;
   do {
     habilidad2 = habilidadesDisponibles[Math.floor(Math.random() * habilidadesDisponibles.length)];
   } while (habilidad2 === habilidad1);
 
-  // Elegir mascota aleatoria si hay disponibles
+  // Mascota inicial
   let mascotasUsuario = [];
   let mascotaNombre = "❌ No hay mascotas en la tienda para asignar.";
   if (db.mascotas.length > 0) {
@@ -75,6 +97,7 @@ const handler = async (msg, { conn, args }) => {
     mascotaNombre = `🐾 *Mascota inicial:* ${mascotaFormateada.nombre}`;
   }
 
+  // Crear usuario
   const usuario = {
     numero,
     nombre,
@@ -92,8 +115,9 @@ const handler = async (msg, { conn, args }) => {
   };
 
   db.usuarios.push(usuario);
-  fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
+  guardarDB(db); // Guardar inmediatamente después de registrar
 
+  // Texto final
   const texto = `🎉 *¡Bienvenido al RPG de La Suki Bot!*\n\n` +
                 `👤 *Nombre:* ${nombre} ${apellido}\n` +
                 `📅 *Edad:* ${edad} años\n` +
