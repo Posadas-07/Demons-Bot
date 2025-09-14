@@ -1,7 +1,39 @@
-// plugins/cazar.js
 const fs = require("fs");
 const path = require("path");
 
+// ===== Helper DIGITS =====
+const DIGITS = (s = "") => String(s).replace(/\D/g, "");
+
+// ===== Función para resolver número real =====
+async function resolveTarget(conn, chatId, anyJid) {
+  const number = DIGITS(anyJid);
+  let realJid = null;
+
+  try {
+    const meta = await conn.groupMetadata(chatId);
+    const raw  = Array.isArray(meta?.participants) ? meta.participants : [];
+
+    const lidParser = participants => {
+      return participants.map(v => ({
+        id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid) ? v.jid : v.id
+      }));
+    };
+    const norm = lidParser(raw);
+
+    if (anyJid.endsWith("@s.whatsapp.net")) realJid = anyJid;
+    else if (anyJid.endsWith("@lid")) {
+      const idx = raw.findIndex(p => p?.id === anyJid);
+      if (idx >= 0) realJid = raw[idx]?.jid || norm[idx]?.id;
+    }
+    if (!realJid && number) realJid = `${number}@s.whatsapp.net`;
+  } catch {
+    if (number) realJid = `${number}@s.whatsapp.net`;
+  }
+
+  return { realJid, number };
+}
+
+// ===== Constantes Cazar =====
 const COOLDOWN_MS = 7 * 60 * 1000; // 7 min
 const XP_MASCOTA_BASE = 120;
 const XP_HAB_BASE = 60;
@@ -29,10 +61,12 @@ function hoyStrLocal() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// ===== Comando cazar =====
 const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
-  const numero = (sender || "").replace(/\D/g, "");
+
+  // Resolver número real y número limpio
+  const { realJid, number } = await resolveTarget(conn, chatId, msg.key.participant || msg.key.remoteJid);
 
   await conn.sendMessage(chatId, { react: { text: "🏹", key: msg.key } });
 
@@ -40,7 +74,8 @@ const handler = async (msg, { conn }) => {
   let db = fs.existsSync(sukirpgPath) ? JSON.parse(fs.readFileSync(sukirpgPath)) : {};
   db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
 
-  const usuario = db.usuarios.find(u => u.numero === numero);
+  // Buscar usuario por número limpio
+  const usuario = db.usuarios.find(u => u.number === number);
   if (!usuario) {
     return conn.sendMessage(chatId, { text: "❌ No estás registrado. Usa `.rpg nombre apellido edad fechaNacimiento` para registrarte." }, { quoted: msg });
   }
@@ -85,6 +120,7 @@ const handler = async (msg, { conn }) => {
   usuario.ultimoCazar = ahora;
   usuario.creditos = (usuario.creditos || 0) + creditosOtorgados;
 
+  // Subir nivel mascota
   let subioNivelMascota = false;
   mascota.xp += xpOtorgada;
   let xpNecesariaMascota = XP_MASCOTA_BASE + (mascota.nivel * 25);
@@ -95,6 +131,7 @@ const handler = async (msg, { conn }) => {
     xpNecesariaMascota = XP_MASCOTA_BASE + (mascota.nivel * 25);
   }
 
+  // Subir nivel habilidad
   const idxHab = Math.random() < 0.5 ? 0 : 1;
   const hab = mascota.habilidades[idxHab];
   let habilidadSubida = null;
@@ -114,6 +151,7 @@ const handler = async (msg, { conn }) => {
 
   fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
 
+  // Mensaje final
   const base = TEXTOS_CAZAR[Math.floor(Math.random() * TEXTOS_CAZAR.length)]
     .replace("{nombre}", `${usuario.nombre} ${usuario.apellido}`.trim())
     .replace("{mascota}", mascota.nombre || "tu mascota")
