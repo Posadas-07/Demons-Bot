@@ -5,7 +5,7 @@ const handler = async (msg, { conn }) => {
 
   await conn.sendMessage(chatId, {
     video: { url: videoUrl },
-    caption: "AQUI TIENES TÚ ULTRA INSTINTO.."
+    caption: ""
   }, { quoted: msg });
 
   await conn.sendMessage(chatId, {
