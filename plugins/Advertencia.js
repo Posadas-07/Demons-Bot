@@ -1,38 +1,75 @@
+// plugins/warn.js
 const fs = require("fs");
 const path = require("path");
 
-const handler = async (msg, { conn, command }) => {
-  const chatId = msg.key.remoteJid;
-  const senderId = msg.key.participant || msg.key.remoteJid;
-  const senderNum = senderId.replace(/[^0-9]/g, "");
-  const isGroup = chatId.endsWith("@g.us");
-  const isOwner = global.owner.some(([id]) => id === senderNum);
+const DIGITS = (s = "") => String(s).replace(/\D/g, "");
 
+/** Normaliza: si un participante viene como @lid y trae .jid (real), usa el real */
+function lidParser(participants = []) {
+  try {
+    return participants.map(v => ({
+      id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid) ? v.jid : v.id,
+      admin: v?.admin ?? null,
+      raw: v
+    }));
+  } catch {
+    return participants || [];
+  }
+}
+
+/** Verifica si un NÚMERO es admin del chat (sirve en grupos LID y NO-LID) */
+async function isAdminByNumber(conn, chatId, number) {
+  try {
+    const meta = await conn.groupMetadata(chatId);
+    const raw  = Array.isArray(meta?.participants) ? meta.participants : [];
+    const norm = lidParser(raw);
+
+    const adminNums = new Set();
+    for (let i = 0; i < raw.length; i++) {
+      const r = raw[i], n = norm[i];
+      const flag = (r?.admin === "admin" || r?.admin === "superadmin" ||
+                    n?.admin === "admin" || n?.admin === "superadmin");
+      if (flag) {
+        [r?.id, r?.jid, n?.id].forEach(x => {
+          const d = DIGITS(x || "");
+          if (d) adminNums.add(d);
+        });
+      }
+    }
+    return adminNums.has(number);
+  } catch {
+    return false;
+  }
+}
+
+const handler = async (msg, { conn, command }) => {
+  const chatId   = msg.key.remoteJid;
+  const senderId = msg.key.participant || msg.key.remoteJid;
+  const senderNo = DIGITS(senderId);
+  const fromMe   = !!msg.key.fromMe;
+  const isOwner  = (typeof global.isOwner === "function") ? global.isOwner(senderId) : 
+                   (Array.isArray(global.owner) && global.owner.some(([id]) => id === senderNo));
+
+  const isGroup  = chatId.endsWith("@g.us");
   if (!isGroup) {
     return conn.sendMessage(chatId, {
       text: "📛 *Este comando solo está disponible en grupos.*",
     }, { quoted: msg });
   }
 
-  const metadata = await conn.groupMetadata(chatId);
-  const isAdmin = metadata.participants.find(p => p.id === senderId)?.admin;
-
-  if (!isAdmin && !isOwner) {
+  const isAdmin = await isAdminByNumber(conn, chatId, senderNo);
+  if (!isAdmin && !isOwner && !fromMe) {
     return conn.sendMessage(chatId, {
       text: "🚫 *Permiso denegado*\nSolo los *admins* o el *dueño del bot* pueden usar este comando.",
     }, { quoted: msg });
   }
 
   const context = msg.message?.extendedTextMessage?.contextInfo;
-  const mentionedJid = context?.mentionedJid || [];
+  const mentionedJid = Array.isArray(context?.mentionedJid) ? context.mentionedJid : [];
 
   let target = null;
-
-  if (context?.participant) {
-    target = context.participant;
-  } else if (mentionedJid.length > 0) {
-    target = mentionedJid[0];
-  }
+  if (context?.participant) target = context.participant;
+  else if (mentionedJid.length > 0) target = mentionedJid[0];
 
   if (!target) {
     return conn.sendMessage(chatId, {
@@ -40,8 +77,8 @@ const handler = async (msg, { conn, command }) => {
     }, { quoted: msg });
   }
 
-  const targetNum = target.replace(/[^0-9]/g, "");
-  if (global.owner.some(([id]) => id === targetNum)) {
+  const targetNum = DIGITS(target);
+  if (Array.isArray(global.owner) && global.owner.some(([id]) => id === targetNum)) {
     return conn.sendMessage(chatId, {
       text: "❌ *No puedes usar este comando con el dueño del bot.*",
     }, { quoted: msg });
@@ -63,7 +100,7 @@ const handler = async (msg, { conn, command }) => {
 `❌ *Usuario expulsado por acumulación de advertencias.*
 
 ╭─⬣「 *Expulsado* 」⬣
-│ 👤 Usuario: @${target.split("@")[0]}
+│ 👤 Usuario: @${targetNum}
 │ ⚠️ Advertencias: ${totalWarns}/3
 ╰─⬣`,
         mentions: [target]
@@ -78,7 +115,7 @@ const handler = async (msg, { conn, command }) => {
 `⚠️ *Advertencia aplicada.*
 
 ╭─⬣「 *Advertencia* 」⬣
-│ 👤 Usuario: @${target.split("@")[0]}
+│ 👤 Usuario: @${targetNum}
 │ ⚠️ Advertencias: ${totalWarns}/3
 ╰─⬣`,
         mentions: [target]
@@ -102,7 +139,7 @@ const handler = async (msg, { conn, command }) => {
 `🗑️ *Advertencia eliminada.*
 
 ╭─⬣「 *Quitar advertencia* 」⬣
-│ 👤 Usuario: @${target.split("@")[0]}
+│ 👤 Usuario: @${targetNum}
 │ ⚠️ Advertencias: ${totalWarns}/3
 ╰─⬣`,
       mentions: [target]
