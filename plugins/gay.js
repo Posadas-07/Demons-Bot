@@ -1,24 +1,19 @@
+// plugins/gay.js
+const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
-  const fromUser = msg.key.participant || msg.key.remoteJid;
 
-  const frasesOwner = [
-    '🛡️ *Defensas activadas*\n@{user} no puede ser escaneado. Nivel: Dios supremo.',
-    '👑 *Acceso denegado*\nIntentaste medir al Creador. Fallo crítico del sistema.',
-    '🚫 Usuario intocable detectado.\n@{user} está fuera del alcance del gayómetro.',
-    '🔒 Seguridad legendaria activa. @{user} está en modo inmortal.',
-    '⚠️ El universo impide escanear al Owner.\nNi lo intentes otra vez.'
-  ];
+  const textRaw = (
+    msg.message?.conversation ||
+    msg.message?.extendedTextMessage?.text ||
+    ''
+  ).trim();
 
-  const stickersOwner = [
-    'https://cdn.russellxz.click/9087aa1c.webp',
-    'https://cdn.russellxz.click/85a16aa5.webp',
-    'https://cdn.russellxz.click/270edf17.webp',
-    'https://cdn.russellxz.click/afd908e6.webp'
-  ];
+  const match = textRaw.match(/^[!./#]?\s*([a-zA-Z]+)/);
+  const comando = match ? match[1].toLowerCase() : null;
 
-  const audioURL = 'https://cdn.russellxz.click/96beb11b.mp3';
+  if (comando !== 'gay') return;
 
-  let mentionedJid;
+  let mentionedJid = null;
   try {
     if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
       mentionedJid = msg.message.extendedTextMessage.contextInfo.mentionedJid[0];
@@ -35,81 +30,64 @@
 
   if (!mentionedJid) {
     return await conn.sendMessage(chatId, {
-      text: '🔍 *Etiqueta o responde a alguien para escanear su porcentaje gay.*',
+      text: `❗ *Uso incorrecto del comando.*\n\nDebes *etiquetar* a alguien o *responder su mensaje* para escanear.\n\n*Ejemplos válidos:*\n> .gay @usuario\n> .gay (respondiendo al mensaje de alguien)`,
     }, { quoted: msg });
   }
 
   const numero = mentionedJid.split('@')[0];
 
+  // Si escanean al owner, respuesta especial
+  const frasesOwner = [
+    '🌈 @{user} es el arcoíris original. Nivel: Divino.',
+    '👑 No puedes medir la gaydad del creador, @{user} dicta la escala.',
+    '🚫 Escaneo fallido. @{user} es inmedible.',
+    '🔒 El universo protege la energía de @{user}.',
+    '⚠️ Resultados prohibidos para @{user}.'
+  ];
+
   const isTaggedOwner = Array.isArray(global.owner) && global.owner.some(([id]) => id === numero);
   if (isTaggedOwner) {
     const frase = frasesOwner[Math.floor(Math.random() * frasesOwner.length)].replace('{user}', numero);
-    const sticker = stickersOwner[Math.floor(Math.random() * stickersOwner.length)];
-
-    await conn.sendMessage(chatId, {
+    return await conn.sendMessage(chatId, {
       text: frase,
       mentions: [mentionedJid]
     }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      sticker: { url: sticker }
-    }, { quoted: msg });
-
-    return;
   }
 
+  // Frases para el remate
+  const frasesGay = [
+    '𐀔 Brillas más que el arcoíris.',
+    '𐀔 Tu closet se quedó sin candado.',
+    '𐀔 RuPaul estaría orgulloso.',
+    '𐀔 Nadie usa mejor el glitter que tú.',
+    '𐀔 El Pride se queda corto contigo.',
+    '𐀔 Tu bandera ondea en cada paso.'
+  ];
+
+  const cierres = [
+    '➢ Escaneo avalado por la comunidad 🌈.',
+    '➢ Certificado por los dioses del glitter.',
+    '➢ Validación oficial de la rainbow crew.',
+    '➢ Registro eterno en los archivos LGBT.',
+    '➢ Informe aprobado por el comité Pride.'
+  ];
+
+  const remate = frasesGay[Math.floor(Math.random() * frasesGay.length)];
+  const cierre = cierres[Math.floor(Math.random() * cierres.length)];
   const porcentaje = Math.floor(Math.random() * 101);
 
-  const frasesFinales = [
-    '𐀔 Tus chakras vibran con glitter.',
-    '𐀔 Te vieron en el Pride bailando con estilo.',
-    '𐀔 Eso ya no es sospecha, es escándalo confirmado.',
-    '𐀔 Lo tuyo es arte, drama y tacones.',
-    '𐀔 Si fueras más gay, serías el himno de Cher.',
-    '𐀔 Eres más brillante que una bola disco.',
-    '𐀔 Confirmado: gayómetro colapsó contigo.',
-    '𐀔 Hollywood quiere hacer una serie sobre tu vida arcoíris.',
-    '𐀔 Eres la inspiración de RuPaul.',
-    '𐀔 Hasta el algoritmo te detecta como fabuloso.'
-  ];
-
-  const frasesCierre = [
-    '➢ 𝑉𝑒𝓇𝒾𝒻𝒾𝒸𝒶𝒹ℴ 𝒸ℴ𝓃 𝓅𝓇ℯ𝒸𝒾𝓈𝒾ℴ𝓃 𝓁𝒶𝓈ℯ𝓇.',
-    '➢ 𝓔𝓼 𝓭𝓪𝓽𝓸 𝓯𝓲𝓷𝓪𝓵, 𝓬𝓲𝓮𝓷𝓬𝓲𝓪 𝓹𝓾𝓻𝓪.',
-    '➢ 𝓢𝓮 𝓪𝓬𝓽𝓲𝓿ó 𝓮𝓵 𝓶𝓸𝓭𝓸 𝓬𝓸𝓷𝓯𝓲𝓻𝓶𝓪𝓬𝓲ó𝓷.',
-    '➢ 𝓛𝓪 𝓮𝓼𝓬𝓪𝓷𝓮𝓪𝓭𝓪 𝓯𝓾𝓮 𝓲𝓷𝓯𝓪𝓵𝓲𝓫𝓵𝓮.',
-    '➢ 𝓡𝓮𝓼𝓾𝓵𝓽𝓪𝓭𝓸 𝓼𝓮𝓵𝓵𝓪𝓭𝓸 𝓬𝓸𝓷 𝓾𝓷 𝓪𝓻𝓬𝓸í𝓻𝓲𝓼.'
-  ];
-
-  const remate = frasesFinales[Math.floor(Math.random() * frasesFinales.length)];
-  const cierre = frasesCierre[Math.floor(Math.random() * frasesCierre.length)];
-
-  const resultado =
-`💫 *ANÁLISIS COMPLETO DEL GAYDÁR*
-
-*📡 RESULTADO:* @${numero} *posee un* *${porcentaje}%* *de gay interior 🌈*
-> ${remate}
-
-${cierre}`;
+  const textoFinal = `🌈 *ANÁLISIS COMPLETO DEL ESCÁNER GAY*\n\n*📡 RESULTADO:* @${numero} *es* 『 ${porcentaje}% 』 GAY 🌐\n\n> ${remate}\n\n${cierre}`;
 
   await conn.sendMessage(chatId, {
-    text: resultado,
+    text: textoFinal,
     mentions: [mentionedJid]
   }, { quoted: msg });
-
-  if (audioURL) {
-    await conn.sendMessage(chatId, {
-      audio: { url: audioURL },
-      mimetype: 'audio/mp4',
-      ptt: true
-    }, { quoted: msg });
-  }
 };
 
 handler.command = ['gay'];
 handler.tags = ['diversión'];
 handler.help = ['gay @usuario o responde'];
-handler.register = true;
 handler.group = true;
+handler.register = true;
 
 module.exports = handler;
