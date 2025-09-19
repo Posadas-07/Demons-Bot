@@ -89,6 +89,7 @@ const handler = async (msg, { conn, command }) => {
   if (!warnData[chatId]) warnData[chatId] = {};
   if (!warnData[chatId][target]) warnData[chatId][target] = 0;
 
+  // === APLICAR ADVERTENCIA ===
   if (command === "advertencia") {
     warnData[chatId][target] += 1;
     const totalWarns = warnData[chatId][target];
@@ -123,7 +124,16 @@ const handler = async (msg, { conn, command }) => {
     }
   }
 
+  // === QUITAR ADVERTENCIA ===
   if (command === "quitaradvertencia") {
+    // 🔒 Mismo chequeo de admin que en "advertencia"
+    const isAdmin = await isAdminByNumber(conn, chatId, senderNo);
+    if (!isAdmin && !isOwner && !fromMe) {
+      return conn.sendMessage(chatId, {
+        text: "🚫 *Permiso denegado*\nSolo los *admins* o el *dueño del bot* pueden quitar advertencias.",
+      }, { quoted: msg });
+    }
+
     if (warnData[chatId][target] === 0) {
       return conn.sendMessage(chatId, {
         text: `✅ *El usuario no tiene advertencias que quitar.*`,
