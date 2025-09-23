@@ -196,92 +196,71 @@ const handler = async (conn) => {
       }
       // 🔒 FIN SISTEMA DE PROTECCIÓN Y AVISO DE CAMBIOS DE ADMIN 🔒
 
-      for (const participant of update.participants) {
-        const { realJid, lidJid, number } = resolveRealFromMeta(metadata, participant);
-        const mentionId = realJid || participant;
-        const mention = `@${number || participant.split("@")[0]}`;
+for (const participant of update.participants) {
+  const { realJid, lidJid, number } = resolveRealFromMeta(metadata, participant);
+  const mentionId = realJid || participant;
+  const mention = `@${number || participant.split("@")[0]}`;
 
-        // ==== BLOQUE DE BIENVENIDA Y DESPEDIDA (MODIFICADO) ====
-if (update.action === "add") {
-  if (welcomeActive != 1) continue;
+  // ==== BLOQUE DE BIENVENIDA Y DESPEDIDA (MODIFICADO) ====
+  if (update.action === "add") {
+    if (welcomeActive != 1) continue;
 
-  const isArabic = (antiArabe == 1) && number && arabes.some(cc => number.startsWith(cc));
-  if (isArabic) {
-    const info = metadata.participants.find(p => p.id === participant);
-    const isAdmin = info?.admin === "admin" || info?.admin === "superadmin";
-    const isOwner = global.isOwner && (global.isOwner(number) || global.isOwner(mentionId));
-    if (!isAdmin && !isOwner) {
-      await conn.sendMessage(chatId, {
-        text: `🚫 ${mention} tiene un prefijo prohibido y será eliminado.`,
-        mentions: [mentionId]
-      });
-      try { 
-        await conn.groupParticipantsUpdate(chatId, [participant], "remove"); 
-      } catch {}
-      continue;
-    }
-  }
-
-  // FOTO DE PERFIL O IMAGEN POR DEFECTO
-  let perfilURL;
-  try {
-    perfilURL = await conn.profilePictureUrl(participant, "image");
-  } catch {
-    perfilURL = "https://cdn.russellxz.click/88034510.jpeg";
-  }
-
-  await conn.sendMessage(chatId, {
-    video: { url: "https://cdn.russellxz.click/09c22a33.mp4" },
-    caption: `👋 ${mention}\n\n${bienvenidaPersonalizada || "¡Bienvenid@ al grupo! 🎉"}`,
-    mentions: [mentionId],
-    contextInfo: {
-      externalAdReply: {
-        title: "👥 Nuevo integrante",
-        body: bienvenidaPersonalizada || "¡Bienvenid@ a la familia!",
-        thumbnailUrl: perfilURL, // 👈 Aquí va la foto del usuario o la de fallback
-        mediaType: 1,
-        renderLargerThumbnail: true
+    const isArabic = (antiArabe == 1) && number && arabes.some(cc => number.startsWith(cc));
+    if (isArabic) {
+      const info = metadata.participants.find(p => p.id === participant);
+      const isAdmin = info?.admin === "admin" || info?.admin === "superadmin";
+      const isOwner = global.isOwner && (global.isOwner(number) || global.isOwner(mentionId));
+      if (!isAdmin && !isOwner) {
+        await conn.sendMessage(chatId, {
+          text: `🚫 ${mention} tiene un prefijo prohibido y será eliminado.`,
+          mentions: [mentionId]
+        });
+        try { await conn.groupParticipantsUpdate(chatId, [participant], "remove"); } catch {}
+        continue;
       }
     }
-  });
 
-} else if (update.action === "remove" && byeActive == 1) {
-  // FOTO DE PERFIL O IMAGEN POR DEFECTO
-  let perfilURL;
-  try {
-    perfilURL = await conn.profilePictureUrl(participant, "image");
-  } catch {
-    perfilURL = "https://cdn.russellxz.click/88034510.jpeg";
-  }
-
-  await conn.sendMessage(chatId, {
-    video: { url: "https://cdn.russellxz.click/7adfbd24.mp4" },
-    caption: `👋 ${mention}\n\n${despedidaPersonalizada || "¡Hasta luego! 😢"}`,
-    mentions: [mentionId],
-    contextInfo: {
-      externalAdReply: {
-        title: "👥 Alguien salió",
-        body: despedidaPersonalizada || "Le diremos adiós con cariño ✨",
-        thumbnailUrl: perfilURL, // 👈 Aquí va la foto del usuario o la de fallback
-        mediaType: 1,
-        renderLargerThumbnail: true
-      }
+    let perfilURL;
+    try {
+      perfilURL = await conn.profilePictureUrl(participant, "image");
+    } catch {
+      perfilURL = "https://cdn.russellxz.click/88034510.jpeg"; // 👈 fallback si no tiene foto
     }
-  });
+
+    await conn.sendMessage(chatId, {
+      image: { url: perfilURL },
+      caption: `👋 ${mention}\n\n${bienvenidaPersonalizada || "¡Bienvenid@ al grupo! 🎉"}`,
+      mentions: [mentionId]
+    });
+
+  } else if (update.action === "remove" && byeActive == 1) {
+    let perfilURL;
+    try {
+      perfilURL = await conn.profilePictureUrl(participant, "image");
+    } catch {
+      perfilURL = "https://cdn.russellxz.click/88034510.jpeg"; // 👈 fallback si no tiene foto
+    }
+
+    await conn.sendMessage(chatId, {
+      image: { url: perfilURL },
+      caption: `👋 ${mention}\n\n${despedidaPersonalizada || "¡Hasta luego! 😢"}`,
+      mentions: [mentionId]
+    });
+  }
+  // ==== FIN BLOQUE BIENVENIDA/DESPEDIDA ====
 }
-// ==== FIN BLOQUE BIENVENIDA/DESPEDIDA ====
 
-      const newMeta = await conn.groupMetadata(chatId);
-      adminCache[chatId] = new Set(
-        newMeta.participants
-          .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
-          .map(p => p.id)
-      );
+const newMeta = await conn.groupMetadata(chatId);
+adminCache[chatId] = new Set(
+  newMeta.participants
+    .filter(p => p.admin === 'admin' || p.admin === 'superadmin')
+    .map(p => p.id)
+);
 
-    } catch (err) {
-      console.error("❌ Error en lógica de grupo:", err);
-    }
-  });
+} catch (err) {
+  console.error("❌ Error en lógica de grupo:", err);
+}
+});
 };
 
 handler.run = handler;
