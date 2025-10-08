@@ -1394,7 +1394,7 @@ sock.ev.on("connection.update", async ({ connection }) => {
         const data = JSON.parse(fs.readFileSync(restarterFile, "utf-8"));
         if (data.chatId) {
           await sock.sendMessage(data.chatId, {
-            text: "✅ *Suki Bot 3.0 está en línea nuevamente* 🚀"
+            text: "✅ *Demons-Bot está en línea nuevamente* 🚀"
           });
           console.log(chalk.yellow("📢 Aviso enviado al grupo del reinicio."));
           fs.unlinkSync(restarterFile); // 🧹 Eliminar archivo tras el aviso
