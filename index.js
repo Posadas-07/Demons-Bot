@@ -603,9 +603,9 @@ try {
 
       global.antisSpam[chatId][user] = userData;
 
-      if (userData.count === 5) {
+      if (userData.count === 3) {
         await sock.sendMessage(chatId, {
-          text: `⚠️ @${user.split("@")[0]} has enviado *5 stickers*. Espera *15 segundos* o si envías *3 más*, serás eliminado.`,
+          text: `⚠️ @${user.split("@")[0]} has enviado *3 stickers*. Espera *15 segundos* o si envías *3 más*, serás eliminado.`,
           mentions: [user]
         });
         userData.warned = true;
