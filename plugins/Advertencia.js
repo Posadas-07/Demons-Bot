@@ -1,4 +1,3 @@
-// plugins/warn.js
 const fs = require("fs");
 const path = require("path");
 
@@ -84,7 +83,7 @@ const handler = async (msg, { conn, command }) => {
     }, { quoted: msg });
   }
 
-  const warnPath = path.resolve("./database/warns.json");
+  const warnPath = path.resolve("./database/advertencias.json");
   const warnData = fs.existsSync(warnPath) ? JSON.parse(fs.readFileSync(warnPath)) : {};
   if (!warnData[chatId]) warnData[chatId] = {};
   if (!warnData[chatId][target]) warnData[chatId][target] = 0;
