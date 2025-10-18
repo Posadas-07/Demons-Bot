@@ -3,7 +3,6 @@ const path = require("path");
 
 const DIGITS = (s = "") => String(s).replace(/\D/g, "");
 
-/** Normaliza: si un participante viene como @lid y trae .jid (real), usa el real */
 function lidParser(participants = []) {
   try {
     return participants.map(v => ({
@@ -16,7 +15,6 @@ function lidParser(participants = []) {
   }
 }
 
-/** Verifica si un NÚMERO es admin del chat (sirve en grupos LID y NO-LID) */
 async function isAdminByNumber(conn, chatId, number) {
   try {
     const meta = await conn.groupMetadata(chatId);
@@ -83,8 +81,20 @@ const handler = async (msg, { conn, command }) => {
     }, { quoted: msg });
   }
 
-  const warnPath = path.resolve("./database/advertencias.json");
-  const warnData = fs.existsSync(warnPath) ? JSON.parse(fs.readFileSync(warnPath)) : {};
+  // === ASEGURAR QUE LA CARPETA Y EL ARCHIVO EXISTAN ===
+  const dbFolder = path.resolve("./database");
+  const warnPath = path.join(dbFolder, "advertencias.json");
+
+  if (!fs.existsSync(dbFolder)) {
+    fs.mkdirSync(dbFolder, { recursive: true });
+  }
+
+  if (!fs.existsSync(warnPath)) {
+    fs.writeFileSync(warnPath, JSON.stringify({}, null, 2));
+  }
+
+  const warnData = JSON.parse(fs.readFileSync(warnPath));
+
   if (!warnData[chatId]) warnData[chatId] = {};
   if (!warnData[chatId][target]) warnData[chatId][target] = 0;
 
@@ -125,14 +135,6 @@ const handler = async (msg, { conn, command }) => {
 
   // === QUITAR ADVERTENCIA ===
   if (command === "quitaradvertencia") {
-    // 🔒 Mismo chequeo de admin que en "advertencia"
-    const isAdmin = await isAdminByNumber(conn, chatId, senderNo);
-    if (!isAdmin && !isOwner && !fromMe) {
-      return conn.sendMessage(chatId, {
-        text: "🚫 *Permiso denegado*\nSolo los *admins* o el *dueño del bot* pueden quitar advertencias.",
-      }, { quoted: msg });
-    }
-
     if (warnData[chatId][target] === 0) {
       return conn.sendMessage(chatId, {
         text: `✅ *El usuario no tiene advertencias que quitar.*`,
