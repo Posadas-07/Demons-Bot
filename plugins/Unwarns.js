@@ -74,36 +74,46 @@ const unwarnsHandler = async (msg, { conn, args }) => {
     }
 
     const warnData = JSON.parse(fs.readFileSync(warnPath));
-    const target = args[0]?.replace(/[@]/g, "") || null;
+
+    // Obtener el usuario objetivo (citado o con @usuario)
+    let target;
+    if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
+      // Si hay mención, usamos al usuario mencionado
+      target = DIGITS(msg.message.extendedTextMessage.contextInfo.mentionedJid[0]);
+    } else if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
+      // Si el mensaje fue citado, usamos al autor del mensaje citado
+      target = DIGITS(msg.message.extendedTextMessage.contextInfo.participant);
+    } else if (args[0]) {
+      // Si se pasa un argumento con @usuario, lo procesamos
+      target = DIGITS(args[0]);
+    }
 
     if (!target) {
-      // Elimina todas las advertencias del grupo
-      if (warnData[chatId]) {
-        delete warnData[chatId];
-        fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
-        return await conn.sendMessage(chatId, {
-          text: "✅ *Todas las advertencias del grupo han sido eliminadas.*"
-        }, { quoted: msg });
-      } else {
-        return await conn.sendMessage(chatId, {
-          text: "⚠️ *No hay advertencias registradas en este grupo.*"
-        }, { quoted: msg });
-      }
-    } else {
-      // Restablece las advertencias de un usuario específico
-      if (warnData[chatId] && warnData[chatId][target]) {
+      return await conn.sendMessage(chatId, {
+        text: "⚠️ *Debes citar un mensaje o mencionar a un usuario para quitarle una advertencia.*"
+      }, { quoted: msg });
+    }
+
+    if (warnData[chatId] && warnData[chatId][target]) {
+      // Reducir advertencia en 1
+      warnData[chatId][target] -= 1;
+
+      // Si las advertencias llegan a 0, eliminamos el registro del usuario
+      if (warnData[chatId][target] <= 0) {
         delete warnData[chatId][target];
-        fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
-        return await conn.sendMessage(chatId, {
-          text: `✅ *Las advertencias del usuario @${target} han sido eliminadas.*`,
-          mentions: [`${target}@s.whatsapp.net`]
-        }, { quoted: msg });
-      } else {
-        return await conn.sendMessage(chatId, {
-          text: `⚠️ *El usuario @${target} no tiene advertencias registradas.*`,
-          mentions: [`${target}@s.whatsapp.net`]
-        }, { quoted: msg });
       }
+
+      fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
+
+      return await conn.sendMessage(chatId, {
+        text: `✅ *Se ha eliminado 1 advertencia del usuario @${target}.*`,
+        mentions: [`${target}@s.whatsapp.net`]
+      }, { quoted: msg });
+    } else {
+      return await conn.sendMessage(chatId, {
+        text: `⚠️ *El usuario @${target} no tiene advertencias registradas.*`,
+        mentions: [`${target}@s.whatsapp.net`]
+      }, { quoted: msg });
     }
   } catch (err) {
     console.error("❌ Error en el comando unwarns:", err);
