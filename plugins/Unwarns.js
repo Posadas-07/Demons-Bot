@@ -1,132 +1,109 @@
 const fs = require("fs");
 const path = require("path");
 
-// Función para obtener solo los dígitos de un JID
+// 🧩 Extrae solo dígitos del JID
 const DIGITS = (s = "") => String(s || "").replace(/\D/g, "");
 
-const unwarnsHandler = async (msg, { conn, args }) => {
+const unwarnsHandler = async (m, { conn, args }) => {
   try {
-    const chatId = msg.key.remoteJid;
+    const chatId = m.key.remoteJid;
     const isGroup = chatId.endsWith("@g.us");
-    const isFromMe = !!msg.key.fromMe;
+    const fromMe = !!m.key.fromMe;
 
-    await conn.sendMessage(chatId, { react: { text: "♻️", key: msg.key } }).catch(() => {});
+    await conn.sendMessage(chatId, { react: { text: "♻️", key: m.key } }).catch(() => {});
 
-    if (!isGroup) {
-      return conn.sendMessage(chatId, { text: "⚠️ *Este comando solo puede usarse en grupos.*" }, { quoted: msg });
-    }
+    if (!isGroup)
+      return conn.sendMessage(chatId, { text: "⚠️ *Este comando solo puede usarse en grupos.*" }, { quoted: m });
 
-    // Verificar el remitente
-    const senderId = msg.key.participant || msg.key.remoteJid;
-    const senderRealJid = typeof msg.realJid === "string"
-      ? msg.realJid
-      : (senderId?.endsWith?.("@s.whatsapp.net") ? senderId : null);
-    const senderDigits = DIGITS(senderRealJid || senderId);
+    // 🧠 Identificar remitente
+    const senderId = m.key.participant || m.key.remoteJid;
+    const senderDigits = DIGITS(senderId);
 
-    // Verificación de dueño
+    // 🧍‍♂️ Verificar si es dueño o admin
     const isOwner = Array.isArray(global.owner) && global.owner.some(([id]) => id === senderDigits);
 
-    // Obtener metadata del grupo
     let meta;
     try {
       meta = await conn.groupMetadata(chatId);
     } catch (e) {
-      console.error("[unwarns] metadata error:", e);
-      return conn.sendMessage(chatId, { text: "❌ No se pudo leer la metadata del grupo." }, { quoted: msg });
+      console.error("[unwarns] Error metadata:", e);
+      return conn.sendMessage(chatId, { text: "❌ No se pudo obtener la información del grupo." }, { quoted: m });
     }
 
     const participantes = Array.isArray(meta?.participants) ? meta.participants : [];
+    const isAdmin = participantes.some(p =>
+      (p?.id && DIGITS(p.id) === senderDigits) && (p?.admin === "admin" || p?.admin === "superadmin")
+    );
 
-    // Verificación de administrador
-    const authorCandidates = new Set([
-      senderId,
-      senderRealJid,
-      `${senderDigits}@s.whatsapp.net`,
-      `${senderDigits}@lid`
-    ].filter(Boolean));
-
-    const isAdmin = participantes.some(p => {
-      const idsPosibles = [
-        p?.id,
-        (typeof p?.jid === "string" ? p.jid : "")
-      ].filter(Boolean);
-
-      const matchId = idsPosibles.some(id => authorCandidates.has(id) || DIGITS(id) === senderDigits);
-      const rolOK = p?.admin === "admin" || p?.admin === "superadmin";
-      return matchId && rolOK;
-    });
-
-    // Solo administradores, dueños o mensajes enviados por el bot pueden usar este comando
-    if (!isAdmin && !isOwner && !isFromMe) {
+    // 🚫 Solo admins, dueño o el bot
+    if (!isAdmin && !isOwner && !fromMe)
       return conn.sendMessage(chatId, {
-        text: "🚫 *Este comando solo puede ser usado por administradores o el dueño del bot.*"
-      }, { quoted: msg });
-    }
+        text: "🚫 *Solo administradores o el dueño del bot pueden usar este comando.*"
+      }, { quoted: m });
 
-    // Ruta de la base de datos
+    // 📂 Ruta del archivo de advertencias
     const dbFolder = path.resolve("./database");
     const warnPath = path.join(dbFolder, "advertencias.json");
 
-    if (!fs.existsSync(warnPath)) {
-      return await conn.sendMessage(chatId, {
-        text: "⚠️ *No hay advertencias registradas.*"
-      }, { quoted: msg });
-    }
+    if (!fs.existsSync(warnPath))
+      return conn.sendMessage(chatId, { text: "⚠️ *No hay advertencias registradas aún.*" }, { quoted: m });
 
     const warnData = JSON.parse(fs.readFileSync(warnPath));
 
-    // Obtener el usuario objetivo (citado o con @usuario)
+    // 🎯 Identificar al usuario objetivo (mencionado, citado o argumento)
     let target;
-    if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-      // Si hay mención, usamos al usuario mencionado
-      target = DIGITS(msg.message.extendedTextMessage.contextInfo.mentionedJid[0]);
-    } else if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
-      // Si el mensaje fue citado, usamos al autor del mensaje citado
-      target = DIGITS(msg.message.extendedTextMessage.contextInfo.participant);
+    const context = m.message?.extendedTextMessage?.contextInfo;
+
+    if (context?.mentionedJid?.length) {
+      target = DIGITS(context.mentionedJid[0]);
+    } else if (context?.participant) {
+      target = DIGITS(context.participant);
     } else if (args[0]) {
-      // Si se pasa un argumento con @usuario, lo procesamos
       target = DIGITS(args[0]);
     }
 
-    if (!target) {
-      return await conn.sendMessage(chatId, {
-        text: "⚠️ *Debes citar un mensaje o mencionar a un usuario para quitarle una advertencia.*"
-      }, { quoted: msg });
-    }
+    if (!target)
+      return conn.sendMessage(chatId, {
+        text: "⚠️ *Debes mencionar, citar o escribir el número del usuario al que quieres quitarle una advertencia.*"
+      }, { quoted: m });
 
-    if (warnData[chatId] && warnData[chatId][target]) {
-      // Reducir advertencias en 1
-      warnData[chatId][target] -= 1;
+    // 🔍 Verificar si el usuario tiene advertencias
+    if (warnData[chatId] && warnData[chatId][`${target}@s.whatsapp.net`]) {
+      const userJid = `${target}@s.whatsapp.net`;
+      warnData[chatId][userJid] -= 1;
 
-      // Si las advertencias llegan a 0, eliminamos el registro del usuario
-      if (warnData[chatId][target] <= 0) {
-        delete warnData[chatId][target];
-        fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
-
-        return await conn.sendMessage(chatId, {
-          text: `✅ *Se ha eliminado 1 advertencia del usuario @${target}.*\nEl usuario ahora tiene *0 advertencias.*`,
-          mentions: [`${target}@s.whatsapp.net`]
-        }, { quoted: msg });
+      // 🧹 Si baja a 0 o menos, eliminar registro
+      if (warnData[chatId][userJid] <= 0) {
+        delete warnData[chatId][userJid];
       }
 
-      // Guardar cambios
+      // 📝 Guardar cambios
       fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
 
-      return await conn.sendMessage(chatId, {
-        text: `✅ *Se ha eliminado 1 advertencia del usuario @${target}.*\nEl usuario ahora tiene *${warnData[chatId][target]} advertencia(s).*`,
-        mentions: [`${target}@s.whatsapp.net`]
-      }, { quoted: msg });
+      const restantes = warnData[chatId][userJid] || 0;
+
+      await conn.sendMessage(chatId, {
+        text: `✅ *Se ha eliminado una advertencia del usuario @${target}.*\nAhora tiene *${restantes} advertencia(s)*.`,
+        mentions: [userJid]
+      }, { quoted: m });
+
     } else {
-      return await conn.sendMessage(chatId, {
+      await conn.sendMessage(chatId, {
         text: `⚠️ *El usuario @${target} no tiene advertencias registradas.*`,
         mentions: [`${target}@s.whatsapp.net`]
-      }, { quoted: msg });
+      }, { quoted: m });
     }
+
   } catch (err) {
-    console.error("❌ Error en el comando unwarns:", err);
-    await conn.sendMessage(msg.key.remoteJid, { text: "❌ Ocurrió un error al ejecutar el comando unwarns." }, { quoted: msg });
+    console.error("❌ Error en comando unwarns:", err);
+    await conn.sendMessage(m.key.remoteJid, { text: "❌ Error al ejecutar el comando `unwarns`." }, { quoted: m });
   }
 };
 
-unwarnsHandler.command = ["unwarns"];
+// 📦 Configuración del comando
+unwarnsHandler.command = ["unwarns", "unwarn"];
+unwarnsHandler.tags = ["group"];
+unwarnsHandler.help = ["unwarns @usuario"];
+unwarnsHandler.group = true;
+
 module.exports = unwarnsHandler;
