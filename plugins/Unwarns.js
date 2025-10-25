@@ -83,7 +83,7 @@ const unwarnsHandler = async (m, { conn, args }) => {
       const restantes = warnData[chatId][userJid] || 0;
 
       await conn.sendMessage(chatId, {
-        text: `✅ *Se ha eliminado una advertencia del usuario @${target}.*\nAhora tiene *${restantes} advertencia(s)*.`,
+        text: `✅ *Se ha eliminado una advertencia del usuario @${target}.*\nAhora tiene *${restantes} advertencia(s) por ser creador de SPAM*.`,
         mentions: [userJid]
       }, { quoted: m });
 
