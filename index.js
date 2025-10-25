@@ -559,7 +559,7 @@ try {
 }
 // === FIN DE LÓGICA ===  
 
-// === ⚠️ INICIO LÓGICA ANTIS STICKERS (actualizada con aviso y advertencias) ===
+// === ⚠️ INICIO LÓGICA ANTIS STICKERS (con sistema de advertencias + unwarn) ===
 try {
   const fs = require("fs");
   const path = require("path");
@@ -568,7 +568,61 @@ try {
   const fromMe = m.key.fromMe;
   const isGroup = chatId.endsWith("@g.us");
   const stickerMsg = m.message?.stickerMessage || m.message?.ephemeralMessage?.message?.stickerMessage;
+  const body = m.message?.conversation || m.message?.extendedTextMessage?.text || "";
 
+  // === Función para acceder/crear archivo de advertencias ===
+  function loadWarns() {
+    const dbFolder = path.resolve("./database");
+    const warnPath = path.join(dbFolder, "advertencias.json");
+    if (!fs.existsSync(dbFolder)) fs.mkdirSync(dbFolder, { recursive: true });
+    if (!fs.existsSync(warnPath)) fs.writeFileSync(warnPath, JSON.stringify({}, null, 2));
+    return { warnPath, warnData: JSON.parse(fs.readFileSync(warnPath)) };
+  }
+
+  // === 📦 SISTEMA DE QUITAR ADVERTENCIAS (unwarn) ===
+  if (isGroup && body?.toLowerCase().startsWith("#unwarn")) {
+    const { warnPath, warnData } = loadWarns();
+
+    const sender = m.key.participant || m.key.remoteJid;
+    const groupMetadata = await sock.groupMetadata(chatId);
+    const admins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
+    const isAdmin = admins.includes(sender);
+    const isOwner = global.owner?.includes(sender.split("@")[0]);
+
+    if (!isAdmin && !isOwner) {
+      await sock.sendMessage(chatId, { text: "🚫 Solo los administradores o el owner pueden usar este comando." });
+      return;
+    }
+
+    const mentioned = m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mentioned) {
+      await sock.sendMessage(chatId, { text: "⚠️ Debes mencionar al usuario para quitarle una advertencia.\nEjemplo: #unwarn @usuario", mentions: [] });
+      return;
+    }
+
+    if (!warnData[chatId]) warnData[chatId] = {};
+    if (!warnData[chatId][mentioned]) warnData[chatId][mentioned] = 0;
+
+    const currentWarns = warnData[chatId][mentioned];
+    if (currentWarns <= 0) {
+      await sock.sendMessage(chatId, {
+        text: `✅ El usuario @${mentioned.split("@")[0]} no tiene advertencias que quitar.`,
+        mentions: [mentioned]
+      });
+      return;
+    }
+
+    warnData[chatId][mentioned] -= 1;
+    fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
+
+    await sock.sendMessage(chatId, {
+      text: `✅ Se ha quitado *1 advertencia* a @${mentioned.split("@")[0]}.\n⚠️ Advertencias restantes: *${warnData[chatId][mentioned]}/3*`,
+      mentions: [mentioned]
+    });
+    return;
+  }
+
+  // === 📦 LÓGICA ANTIS STICKERS ===
   if (isGroup && !fromMe && stickerMsg) {
     const { getConfig } = requireFromRoot("db");
     const antisActivo = await getConfig(chatId, "antis");
@@ -578,7 +632,6 @@ try {
       const DIGITS = s => String(s || "").replace(/\D/g, "");
       const userNum = DIGITS(user);
 
-      // === Control de spam de stickers ===
       const now = Date.now();
       if (!global.antisSpam) global.antisSpam = {};
       if (!global.antisSpam[chatId]) global.antisSpam[chatId] = {};
@@ -590,7 +643,7 @@ try {
       };
 
       const timePassed = now - userData.last;
-      if (timePassed > 60000) { // 60 segundos sin stickers => reiniciar
+      if (timePassed > 60000) {
         userData.count = 0;
         userData.warnedRecently = false;
       }
@@ -608,7 +661,6 @@ try {
           mentions: [user]
         });
 
-        // Reiniciar contador luego de 60 segundos
         setTimeout(() => {
           if (global.antisSpam[chatId]?.[user]) {
             global.antisSpam[chatId][user].count = 0;
@@ -617,19 +669,13 @@ try {
         }, 60000);
       }
 
-      // === Si vuelve a enviar 2 stickers después del aviso ===
+      // === Si vuelve a enviar otros 2 stickers después del aviso ===
       if (userData.count >= 4 && userData.warnedRecently) {
         userData.count = 0;
         userData.warnedRecently = false;
 
-        // === Ruta de la base de datos ===
-        const dbFolder = path.resolve("./database");
-        const warnPath = path.join(dbFolder, "advertencias.json");
+        const { warnPath, warnData } = loadWarns();
 
-        if (!fs.existsSync(dbFolder)) fs.mkdirSync(dbFolder, { recursive: true });
-        if (!fs.existsSync(warnPath)) fs.writeFileSync(warnPath, JSON.stringify({}, null, 2));
-
-        const warnData = JSON.parse(fs.readFileSync(warnPath));
         if (!warnData[chatId]) warnData[chatId] = {};
         if (!warnData[chatId][user]) warnData[chatId][user] = 0;
 
@@ -658,8 +704,7 @@ try {
 } catch (e) {
   console.error("❌ Error en lógica antis stickers:", e);
 }
-// === ✅ FIN LÓGICA ANTIS STICKERS (actualizada) ===
-// === ✅ FIN LÓGICA ANTIS STICKERS ===
+// === ✅ FIN LÓGICA ANTIS STICKERS (con unwarn integrado) ===
 
 
   // === ✅ INICIO CONTEO DE MENSAJES EN setwelcome.json ===
