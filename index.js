@@ -559,8 +559,7 @@ try {
 }
 // === FIN DE LÓGICA ===  
 
-// === ⛔ INICIO LÓGICA ANTIS STICKERS (bloqueo tras 3 strikes en 15s) ===
-// === ⛔ INICIO LÓGICA ANTIS STICKERS (con sistema de advertencias integrado) ===
+// === ⚠️ INICIO LÓGICA ANTIS STICKERS (actualizada con aviso y advertencias) ===
 try {
   const fs = require("fs");
   const path = require("path");
@@ -586,26 +585,44 @@ try {
 
       const userData = global.antisSpam[chatId][user] || {
         count: 0,
-        last: now
+        last: now,
+        warnedRecently: false
       };
 
       const timePassed = now - userData.last;
-      if (timePassed > 15000) {
-        userData.count = 1;
-        userData.last = now;
-      } else {
-        userData.count++;
-        userData.last = now;
+      if (timePassed > 60000) { // 60 segundos sin stickers => reiniciar
+        userData.count = 0;
+        userData.warnedRecently = false;
       }
 
+      userData.count++;
+      userData.last = now;
       global.antisSpam[chatId][user] = userData;
 
-      // === Cuando manda 3 stickers ===
-      if (userData.count >= 3) {
-        // Reiniciar contador local
-        userData.count = 0;
+      // === Cuando envía 2 stickers seguidos ===
+      if (userData.count === 2 && !userData.warnedRecently) {
+        userData.warnedRecently = true;
 
-        // === RUTA DE LA BASE DE DATOS ===
+        await sock.sendMessage(chatId, {
+          text: `⚠️ @${userNum} has enviado *2 stickers*.\nEspera *60 segundos* o si envías *1 más*, se te dará *Advertencia ⚠️*\n\n*3 advertencias y serás expulsado.*`,
+          mentions: [user]
+        });
+
+        // Reiniciar contador luego de 60 segundos
+        setTimeout(() => {
+          if (global.antisSpam[chatId]?.[user]) {
+            global.antisSpam[chatId][user].count = 0;
+            global.antisSpam[chatId][user].warnedRecently = false;
+          }
+        }, 60000);
+      }
+
+      // === Si vuelve a enviar 2 stickers después del aviso ===
+      if (userData.count >= 4 && userData.warnedRecently) {
+        userData.count = 0;
+        userData.warnedRecently = false;
+
+        // === Ruta de la base de datos ===
         const dbFolder = path.resolve("./database");
         const warnPath = path.join(dbFolder, "advertencias.json");
 
@@ -613,43 +630,25 @@ try {
         if (!fs.existsSync(warnPath)) fs.writeFileSync(warnPath, JSON.stringify({}, null, 2));
 
         const warnData = JSON.parse(fs.readFileSync(warnPath));
-
         if (!warnData[chatId]) warnData[chatId] = {};
         if (!warnData[chatId][user]) warnData[chatId][user] = 0;
 
-        // === Sumar advertencia por spam de stickers ===
         warnData[chatId][user] += 1;
         const totalWarns = warnData[chatId][user];
         fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
 
         if (totalWarns >= 3) {
-          // === Expulsar por 3 advertencias ===
           await sock.sendMessage(chatId, {
-            text:
-`❌ *Usuario expulsado por acumulación de advertencias (stickers).*
-
-╭─⬣「 *Expulsado* 」⬣
-│ 👤 Usuario: @${userNum}
-│ ⚠️ Advertencias: ${totalWarns}/3
-╰─⬣`,
+            text: `❌ *Usuario expulsado por acumulación de advertencias (stickers).* \n\n╭─⬣「 *Expulsado* 」⬣\n│ 👤 Usuario: @${userNum}\n│ ⚠️ Advertencias: ${totalWarns}/3\n╰─⬣`,
             mentions: [user]
           });
           await sock.groupParticipantsUpdate(chatId, [user], "remove");
 
-          // Reiniciar advertencias tras expulsión
           warnData[chatId][user] = 0;
           fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
         } else {
-          // === Avisar de advertencia aplicada ===
           await sock.sendMessage(chatId, {
-            text:
-`⚠️ *Advertencia por exceso de stickers.*
-
-╭─⬣「 *Advertencia automática* 」⬣
-│ 👤 Usuario: @${userNum}
-│ ⚠️ Advertencias: ${totalWarns}/3
-│ 🧩 Motivo: Envío de 3 stickers seguidos
-╰─⬣`,
+            text: `⚠️ *Advertencia automática por exceso de stickers.*\n\n╭─⬣「 *Advertencia ${totalWarns}/3* 」⬣\n│ 👤 Usuario: @${userNum}\n│ 🧩 Motivo: Ignorar aviso tras 2 stickers\n╰─⬣`,
             mentions: [user]
           });
         }
@@ -659,7 +658,7 @@ try {
 } catch (e) {
   console.error("❌ Error en lógica antis stickers:", e);
 }
-// === ✅ FIN LÓGICA ANTIS STICKERS ===
+// === ✅ FIN LÓGICA ANTIS STICKERS (actualizada) ===
 // === ✅ FIN LÓGICA ANTIS STICKERS ===
 
 
