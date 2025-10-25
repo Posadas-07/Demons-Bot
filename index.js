@@ -618,7 +618,7 @@ try {
       }
 
       // === Si vuelve a enviar 2 stickers después del aviso ===
-      if (userData.count >= 4 && userData.warnedRecently) {
+      if (userData.count >= 3 && userData.warnedRecently) {
         userData.count = 0;
         userData.warnedRecently = false;
 
