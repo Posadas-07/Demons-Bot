@@ -95,18 +95,25 @@ const unwarnsHandler = async (msg, { conn, args }) => {
     }
 
     if (warnData[chatId] && warnData[chatId][target]) {
-      // Reducir advertencia en 1
+      // Reducir advertencias en 1
       warnData[chatId][target] -= 1;
 
       // Si las advertencias llegan a 0, eliminamos el registro del usuario
       if (warnData[chatId][target] <= 0) {
         delete warnData[chatId][target];
+        fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
+
+        return await conn.sendMessage(chatId, {
+          text: `✅ *Se ha eliminado 1 advertencia del usuario @${target}.*\nEl usuario ahora tiene *0 advertencias.*`,
+          mentions: [`${target}@s.whatsapp.net`]
+        }, { quoted: msg });
       }
 
+      // Guardar cambios
       fs.writeFileSync(warnPath, JSON.stringify(warnData, null, 2));
 
       return await conn.sendMessage(chatId, {
-        text: `✅ *Se ha eliminado 1 advertencia del usuario @${target}.*`,
+        text: `✅ *Se ha eliminado 1 advertencia del usuario @${target}.*\nEl usuario ahora tiene *${warnData[chatId][target]} advertencia(s).*`,
         mentions: [`${target}@s.whatsapp.net`]
       }, { quoted: msg });
     } else {
