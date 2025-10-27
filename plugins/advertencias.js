@@ -1,48 +1,63 @@
 const fs = require("fs");
 const path = require("path");
 
-const handler = async (msg, { conn }) => {
+async function advertenciasGrupoHandler(msg, { conn }) {
   const chatId = msg.key.remoteJid;
-  const isGroup = chatId.endsWith("@g.us");
+  const senderId = msg.key.participant || msg.key.remoteJid;
+  const senderNo = String(senderId).replace(/\D/g, "");
+  const fromMe = !!msg.key.fromMe;
 
+  const isOwner = (typeof global.isOwner === "function") ? global.isOwner(senderId) : 
+                 (Array.isArray(global.owner) && global.owner.some(([id]) => id === senderNo));
+
+  const isGroup = chatId.endsWith("@g.us");
   if (!isGroup) {
     return conn.sendMessage(chatId, {
       text: "📛 *Este comando solo está disponible en grupos.*",
     }, { quoted: msg });
   }
 
-  const warnPath = path.resolve("./database/warns.json");
+  const isAdmin = await isAdminByNumber(conn, chatId, senderNo);
+  if (!isAdmin && !isOwner && !fromMe) {
+    return conn.sendMessage(chatId, {
+      text: "🚫 *Permiso denegado*\nSolo los *admins* o el *dueño del bot* pueden usar este comando.",
+    }, { quoted: msg });
+  }
+
+  // === ASEGURAR QUE EL ARCHIVO EXISTE ===
+  const dbFolder = path.resolve("./database");
+  const warnPath = path.join(dbFolder, "advertencias.json");
+
   if (!fs.existsSync(warnPath)) {
     return conn.sendMessage(chatId, {
-      text: "❌ *No hay advertencias registradas en este grupo.*",
+      text: "⚠️ *No hay advertencias registradas en este grupo.*",
     }, { quoted: msg });
   }
 
   const warnData = JSON.parse(fs.readFileSync(warnPath));
-  const warnsGroup = warnData[chatId];
-
-  if (!warnsGroup || Object.keys(warnsGroup).length === 0) {
+  if (!warnData[chatId] || Object.keys(warnData[chatId]).length === 0) {
     return conn.sendMessage(chatId, {
-      text: "✅ *Todos los miembros del grupo están sin advertencias.*",
+      text: "⚠️ *No hay advertencias registradas en este grupo.*",
     }, { quoted: msg });
   }
 
-  let msgList = `╭─⬣「 *Advertencias del grupo* 」⬣\n`;
-  const mentionList = [];
+  // === GENERAR LISTA DE ADVERTENCIAS ===
+  const warnings = Object.entries(warnData[chatId])
+    .filter(([user, warns]) => warns > 0)
+    .map(([user, warns]) => `👤 *Usuario:* @${String(user).replace(/\D/g, "")}\n⚠️ *Advertencias:* ${warns}/3`)
+    .join("\n\n");
 
-  for (const jid in warnsGroup) {
-    const count = warnsGroup[jid];
-    msgList += `│ 👤 @${jid.split("@")[0]} — ⚠️ ${count}/3\n`;
-    mentionList.push(jid);
+  if (!warnings) {
+    return conn.sendMessage(chatId, {
+      text: "⚠️ *No hay advertencias registradas en este grupo.*",
+    }, { quoted: msg });
   }
 
-  msgList += `╰─⬣`;
-
   await conn.sendMessage(chatId, {
-    text: msgList.trim(),
-    mentions: mentionList
+    text: `📋 *Advertencias del grupo:*\n\n${warnings}`,
+    mentions: Object.keys(warnData[chatId]),
   }, { quoted: msg });
-};
+}
 
-handler.command = ["advertenciasgrupo"];
-module.exports = handler;
+advertenciasGrupoHandler.command = ["advertenciasgrupo"];
+module.exports = advertenciasGrupoHandler;
