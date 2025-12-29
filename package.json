@@ -1,5 +1,5 @@
 {
-  "name": "azura-ultra-2.0-bot",
+  "name": "Killua-Bot",
   "version": "1.0.0-personalizado",
   "description": "Bot de WhatsApp con Baileys",
   "main": "index.js",
@@ -10,7 +10,7 @@
     "code": "node index.js code",
     "dev": "nodemon index.js"
   },
-  "author": "Russell",
+  "author": "Cholox",
   "license": "ISC",
   "dependencies": {
     "@whiskeysockets/baileys": "github:King-xz/bails",
@@ -48,8 +48,9 @@
     "qrcode-terminal": "^0.12.0",
     "util": "^0.12.4",
     "yargs": "^17.3.1",
-    "better-sqlite3": "^8.5.3",
-    "sharp": "^0.32.6"
+    "better-sqlite3": "^10.0.0",
+    "sharp": "^0.34.1",
+    "luxon": "^3.3.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
